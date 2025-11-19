@@ -14,8 +14,8 @@ dependencies = [
     "duckdb",
     "fastmcp",
     "polars",
-    "pyarrow>=22.0.0",
-    "pyiceberg[duckdb,polars]",
+    "pyarrow",
+    "pyiceberg[duckdb,polars,pyiceberg-core]",
 ]
 
 [project.urls]
