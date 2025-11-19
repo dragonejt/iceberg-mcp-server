@@ -1,0 +1,73 @@
+name: integration
+
+on:
+  push:
+    branches: 
+      - "*"
+  pull_request:
+    branches: 
+      - main
+
+env:
+  ENV: testing
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v5
+
+    - name: Setup uv and Python
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: latest
+
+    - name: Run Tests
+      run: uv run pytest --junitxml=junit.xml --cov . --cov-report xml:coverage.xml
+
+    - name: Lint Project and Formatting
+      run: |
+        uv run ruff check
+        uv run ruff format --check
+
+    - name: Upload Test Coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        fail_ci_if_error: true
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+    - name: Upload Test Results to Codecov
+      if: ${{ !cancelled() }}
+      uses: codecov/test-results-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+
+  analyze:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+      
+    strategy:
+      fail-fast: false
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v5
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: python
+
+    - name: AutoBuild
+      uses: github/codeql-action/autobuild@v3
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: /language:python

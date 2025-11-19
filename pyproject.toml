@@ -25,7 +25,9 @@ documentation = "https://github.com/dragonejt/iceberg-mcp-server/wiki"
 
 [dependency-groups]
 dev = [
-    "ruff",
+    "pytest",
+    "pytest-cov",
+    "ruff"
 ]
 
 [tool.ruff]
