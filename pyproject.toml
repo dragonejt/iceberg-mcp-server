@@ -1,9 +1,44 @@
 [project]
 name = "iceberg-mcp-server"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP Server for Apache Iceberg"
 readme = "README.md"
+license = "MPL-2.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Framework :: Django",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
+]
 requires-python = ">=3.13"
 dependencies = [
-    "pyiceberg",
+    "duckdb",
+    "fastmcp",
+    "polars",
+    "pyarrow>=22.0.0",
+    "pyiceberg[duckdb,polars]",
+]
+
+[project.urls]
+source = "https://github.com/dragonejt/iceberg-mcp-server.git"
+issues = "https://github.com/dragonejt/iceberg-mcp-server/issues"
+documentation = "https://github.com/dragonejt/iceberg-mcp-server/wiki"
+
+[dependency-groups]
+dev = [
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "PL",  # pylint
+    "I",   # isort
+    "C90", # mccabe
+    "FAST" # fastmcp
 ]
