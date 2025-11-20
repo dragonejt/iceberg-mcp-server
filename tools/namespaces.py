@@ -1,40 +1,63 @@
+"""Namespace management helpers that wrap a PyIceberg Catalog.
+
+This module exposes NamespaceTools, a thin helper around a Catalog
+instance to list and create namespaces.
+"""
+
 from typing import Annotated, List, Union
 
 from pydantic import Field
+from pyiceberg.catalog import Catalog
 from pyiceberg.typedef import Identifier
 
-from catalog import load_catalog
 
+class NamespaceTools:
+    """Helper methods for working with Iceberg namespaces.
 
-async def list_namespaces(
-    namespace: Annotated[Union[str, Identifier], Field(description="Parent namespace identifier to search.")] = (),
-) -> List[Identifier]:
-    """List all namespaces under a parent namespace.
-
-    Args:
-        namespace (str | Identifier): Parent namespace identifier to
-            search. Defaults to root namespace.
-
-    Returns:
-        List[Identifier]: A list of namespace identifiers.
+    Attributes:
+        catalog: Catalog instance used to perform
+            namespace operations.
     """
-    catalog = load_catalog()
 
-    return catalog.list_namespaces(namespace)
+    catalog: Catalog
 
+    def __init__(self, catalog: Catalog) -> None:
+        """Initialize the NamespaceTools wrapper.
 
-async def create_namespace(
-    namespace: Annotated[Union[str, Identifier], Field(description="Namespace to create.")],
-) -> List[Identifier]:
-    """Create a new namespace if it does not already exist.
+        Args:
+            catalog: Catalog used for namespace
+                operations.
+        """
+        self.catalog = catalog
 
-    Args:
-        namespace (str | Identifier): Namespace to create.
+    async def list_namespaces(
+        self,
+        namespace: Annotated[Union[str, Identifier], Field(description="Parent namespace identifier to search.")] = (),
+    ) -> List[Identifier]:
+        """List all namespaces under a parent namespace.
 
-    Returns:
-        List[Identifier]: A list of all namespaces under the parent namespace.
-    """
-    catalog = load_catalog()
-    catalog.create_namespace_if_not_exists(namespace)
+        Args:
+            namespace: Parent namespace identifier to
+                search. Defaults to the root namespace when omitted or empty.
 
-    return catalog.list_namespaces(namespace)
+        Returns:
+            A list of namespace identifiers.
+        """
+
+        return self.catalog.list_namespaces(namespace)
+
+    async def create_namespace(
+        self,
+        namespace: Annotated[Union[str, Identifier], Field(description="Namespace to create.")],
+    ) -> List[Identifier]:
+        """Create a new namespace if it does not already exist.
+
+        Args:
+            namespace: Namespace to create.
+
+        Returns:
+            A list of all namespaces under the root namespace.
+        """
+        self.catalog.create_namespace_if_not_exists(namespace)
+
+        return self.catalog.list_namespaces()

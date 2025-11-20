@@ -1,18 +1,28 @@
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 
-from tools.namespaces import create_namespace, list_namespaces
-from tools.tables import list_tables, read_table_contents, read_table_metadata
+from catalog import load_catalog, load_duckdb
+from tools.namespaces import NamespaceTools
+from tools.query import QueryTools
+from tools.tables import TableTools
 
+catalog = load_catalog()
+duckdb = load_duckdb()
 mcp = FastMCP(
     name="Iceberg MCP Server",
 )
 
-mcp.tool(list_namespaces, annotations=ToolAnnotations(readOnlyHint=True))
-mcp.tool(create_namespace)
-mcp.tool(list_tables, annotations=ToolAnnotations(readOnlyHint=True))
-mcp.tool(read_table_metadata, annotations=ToolAnnotations(readOnlyHint=True))
-mcp.tool(read_table_contents, annotations=ToolAnnotations(readOnlyHint=True))
+namespace = NamespaceTools(catalog)
+mcp.tool(namespace.list_namespaces, annotations=ToolAnnotations(readOnlyHint=True))
+mcp.tool(namespace.create_namespace)
+
+table = TableTools(catalog)
+mcp.tool(table.list_tables, annotations=ToolAnnotations(readOnlyHint=True))
+mcp.tool(table.read_table_metadata, annotations=ToolAnnotations(readOnlyHint=True))
+mcp.tool(table.read_table_contents, annotations=ToolAnnotations(readOnlyHint=True))
+
+query = QueryTools(duckdb)
+mcp.tool(query.sql_query, annotations=ToolAnnotations(destructiveHint=True))
 
 
 if __name__ == "__main__":
