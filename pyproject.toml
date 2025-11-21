@@ -27,7 +27,8 @@ documentation = "https://github.com/dragonejt/iceberg-mcp-server/wiki"
 dev = [
     "pytest",
     "pytest-cov",
-    "ruff"
+    "ruff",
+    "ty",
 ]
 
 [tool.ruff]

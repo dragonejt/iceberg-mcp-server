@@ -6,6 +6,7 @@ with the Iceberg extension and attached catalog.
 """
 
 from os import getenv
+from typing import Optional
 
 import duckdb
 from pyiceberg.catalog import Catalog, CatalogType, load_rest
@@ -37,7 +38,7 @@ def load_catalog() -> Catalog:
             raise ValueError(f"Unsupported catalog type: {catalog_type.value}")
 
 
-def load_duckdb() -> duckdb.DuckDBPyConnection:
+def load_duckdb() -> Optional[duckdb.DuckDBPyConnection]:
     """Create and configure a DuckDB connection with the Iceberg extension.
 
     The function connects to an in-memory DuckDB instance, loads the
@@ -72,6 +73,6 @@ def load_duckdb() -> duckdb.DuckDBPyConnection:
                     """)
 
         case _:
-            raise ValueError(f"Unsupported catalog type: {catalog_type.value}")
+            return None
 
     return con

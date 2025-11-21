@@ -4,8 +4,6 @@ This module provides a small helper class to execute SQL queries and return
 results as a list of dictionaries.
 """
 
-from typing import List
-
 from duckdb import DuckDBPyConnection
 
 
@@ -27,7 +25,7 @@ class QueryTools:
         """
         self.duckdb = duckdb
 
-    async def sql_query(self, query: str) -> List[dict]:
+    async def sql_query(self, query: str) -> str:
         """Execute a SQL query and return results as a list of dicts.
 
         The query is executed using the embedded DuckDB connection and the
@@ -41,7 +39,6 @@ class QueryTools:
             query: The SQL query string to execute.
 
         Returns:
-            Query results where each row is represented as a
-            dictionary mapping column names to values.
+            Query results by row as JSON.
         """
-        return self.duckdb.sql(query).execute().pl().to_dicts()
+        return self.duckdb.sql(query).execute().pl().write_json()

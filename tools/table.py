@@ -74,7 +74,7 @@ class TableTools:
             Optional[int],
             Field(description="Row index to end pagination, exclusive."),
         ] = None,
-    ) -> List[dict]:
+    ) -> str:
         """Retrieve table contents with optional pagination.
 
         Supports negative indices for both `start` and `end` parameters to enable
@@ -90,17 +90,24 @@ class TableTools:
                 from the end of the table.
 
         Returns:
-            A list of dictionaries representing the table rows.
+            JSON representation of the table rows.
         """
         table = self.catalog.load_table(table_identifier)
 
-        row_limit = int(table.current_snapshot().summary["total-records"])
+        snapshot = table.current_snapshot()
+        if snapshot is None:
+            raise ValueError(f"Table: {table_identifier} has no current snapshot.")
+        summary = snapshot.summary
+        if summary is None:
+            raise ValueError(f"Snapshot for Table: {table_identifier} has no summary.")
+        row_limit = int(summary.get("total-records", "0"))
+
         if start < 0:
             start += row_limit
         if end is None:
             end = row_limit
         elif end < 0:
-            end += row_limit
+            end = max(0, end + row_limit)
         else:
             end = min(end, row_limit)
 
@@ -112,4 +119,4 @@ class TableTools:
             df = table.scan().to_polars()
             df = df.slice(start, end - start)
 
-        return df.to_dicts()
+        return df.write_json()
