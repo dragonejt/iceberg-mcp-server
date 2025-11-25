@@ -1,13 +1,13 @@
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from pyiceberg.catalog import load_catalog
 
-from catalog import load_catalog, load_duckdb
 from tools.namespace import NamespaceTools
 from tools.query import QueryTools
 from tools.table import TableTools
 
 catalog = load_catalog()
-duckdb = load_duckdb()
+duckdb = QueryTools.load_duckdb(catalog)
 mcp = FastMCP(
     name="Iceberg MCP Server",
 )

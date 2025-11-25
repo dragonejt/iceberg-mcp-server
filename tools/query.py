@@ -4,7 +4,11 @@ This module provides a small helper class to execute SQL queries and return
 results as a list of dictionaries.
 """
 
+from typing import Optional
+
 from duckdb import DuckDBPyConnection
+from duckdb import connect as ddb_connect
+from pyiceberg.catalog import Catalog, CatalogType, infer_catalog_type
 
 
 class QueryTools:
@@ -42,3 +46,54 @@ class QueryTools:
             Query results by row as JSON.
         """
         return self.duckdb.sql(query).execute().pl().write_json()
+
+    @staticmethod
+    def load_duckdb(catalog: Catalog) -> Optional[DuckDBPyConnection]:
+        """Create and configure a DuckDB connection with the Iceberg extension.
+
+        The function connects to an in-memory DuckDB instance, loads the
+        Iceberg extension, and attaches an Iceberg catalog using the same
+        environment variables as :func:`load_catalog`.
+
+        Returns:
+            The configured DuckDB connection.
+
+        Raises:
+            ValueError: If the catalog type specified by the environment is not
+                supported.
+        """
+        con = ddb_connect()
+        con.load_extension("iceberg")
+
+        catalog_type = infer_catalog_type(catalog.name, catalog.properties)
+
+        match catalog_type:
+            case CatalogType.REST:
+                if "oauth2-server-uri" in catalog.properties:
+                    con.sql(f"""
+                            CREATE SECRET iceberg_secret (
+                                TYPE iceberg,
+                                CLIENT_ID '{catalog.properties["client-id"]}',
+                                CLIENT_SECRET '{catalog.properties["client-secret"]}',
+                                OAUTH2_SERVER_URI '{catalog.properties["oauth2-server-uri"]}'
+                            );
+                            """)
+                else:
+                    con.sql(f"""
+                            CREATE SECRET iceberg_secret (
+                                TYPE iceberg,
+                                TOKEN '{catalog.properties["token"]}'
+                            );
+                            """)
+                con.sql(f"""
+                        ATTACH '{catalog.properties.get("warehouse", "")}' AS catalog (
+                            TYPE iceberg,
+                            SECRET iceberg_secret,
+                            ENDPOINT '{catalog.properties["uri"]}'
+                        );
+                        """)
+
+            case _:
+                return None
+
+        return con
