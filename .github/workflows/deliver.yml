@@ -1,0 +1,18 @@
+name: delivery
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/iceberg-mcp-server
+    permissions:
+      id-token: write
+    steps:
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1

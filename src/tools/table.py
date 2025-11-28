@@ -5,8 +5,9 @@ to list tables, read table metadata, and page table contents into Python
 dictionaries.
 """
 
-from typing import Annotated, List, Optional, Union
+from typing import Annotated, Dict, List, Optional, Union
 
+import pyarrow as pa
 from pydantic import Field
 from pyiceberg.catalog import Catalog
 from pyiceberg.table.metadata import TableMetadata
@@ -49,23 +50,23 @@ class TableTools:
 
     async def read_table_metadata(
         self,
-        table_identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
     ) -> TableMetadata:
         """Retrieve metadata for a table.
 
         Args:
-            table_identifier: The identifier of the table.
+            identifier: The identifier of the table.
 
         Returns:
             The table metadata object.
         """
-        table = self.catalog.load_table(table_identifier)
+        table = self.catalog.load_table(identifier)
 
         return table.metadata
 
     async def read_table_contents(
         self,
-        table_identifier: Annotated[Union[str, Identifier], Field(description="Table identifier")],
+        identifier: Annotated[Union[str, Identifier], Field(description="Table identifier")],
         start: Annotated[
             int,
             Field(description="Row index to start pagination, inclusive."),
@@ -82,7 +83,7 @@ class TableTools:
         all rows from ``start`` to the end of the table are returned.
 
         Args:
-            table_identifier: The identifier of the table.
+            identifier: The identifier of the table.
             start: Row index to start pagination (inclusive). Defaults to
                 ``0``. Negative indices count from the end of the table.
             end: Row index to end pagination (exclusive).
@@ -92,14 +93,14 @@ class TableTools:
         Returns:
             JSON representation of the table rows.
         """
-        table = self.catalog.load_table(table_identifier)
+        table = self.catalog.load_table(identifier)
 
         snapshot = table.current_snapshot()
         if snapshot is None:
-            raise ValueError(f"Table: {table_identifier} has no current snapshot.")
+            raise ValueError(f"Table: {identifier} has no current snapshot.")
         summary = snapshot.summary
         if summary is None:
-            raise ValueError(f"Snapshot for Table: {table_identifier} has no summary.")
+            raise ValueError(f"Snapshot for Table: {identifier} has no summary.")
         row_limit = int(summary.get("total-records", "0"))
 
         if start < 0:
@@ -120,3 +121,28 @@ class TableTools:
             df = df.slice(start, end - start)
 
         return df.write_json()
+
+    async def create_table_from_contents(
+        self,
+        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        contents: Annotated[Dict[str, List], Field(description="Columnar dictionary of table contents.")],
+    ) -> None:
+        """Create a new Iceberg table and populate it with contents.
+
+        Creates a new table in the catalog with the specified identifier using
+        the schema inferred from the provided contents, then overwrites the table
+        with the actual data.
+
+        Args:
+            identifier: The identifier of the table to create.
+            contents: A columnar dictionary where keys are column names and values
+                are lists of column data.
+
+        Raises:
+            ValueError: If the table already exists in the catalog.
+            TypeError: If the contents cannot be converted to a PyArrow table.
+        """
+        table_contents = pa.table(contents)
+        table = self.catalog.create_table(identifier, table_contents.schema)
+
+        table.overwrite(table_contents)
