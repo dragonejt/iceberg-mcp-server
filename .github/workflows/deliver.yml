@@ -14,5 +14,18 @@ jobs:
     permissions:
       id-token: write
     steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Setup uv and Python
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: latest
+
+    - name: uv Build
+      run: uv build
+
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
