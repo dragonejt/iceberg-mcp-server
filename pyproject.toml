@@ -1,6 +1,6 @@
 [project]
 name = "iceberg-mcp-server"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP Server for Apache Iceberg"
 readme = "README.md"
 license = "MPL-2.0"
@@ -30,6 +30,9 @@ dev = [
     "ty",
 ]
 
+[project.scripts]
+iceberg-mcp-server = "src.iceberg:main"
+
 [build-system]
 requires = ["uv_build"]
 build-backend = "uv_build"
@@ -37,9 +40,6 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "src"
 module-root = "."
-
-[project.scripts]
-iceberg-mcp-server = "src.iceberg:main"
 
 [tool.ruff]
 line-length = 120
