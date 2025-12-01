@@ -1,6 +1,6 @@
 [project]
 name = "iceberg-mcp-server"
-version = "0.1.1"
+version = "0.1.2"
 description = "MCP Server for Apache Iceberg"
 readme = "README.md"
 license = "MPL-2.0"
@@ -20,6 +20,7 @@ dependencies = [
 ]
 
 [project.urls]
+homepage = "https://pypi.org/project/iceberg-mcp-server/"
 source = "https://github.com/dragonejt/iceberg-mcp-server.git"
 issues = "https://github.com/dragonejt/iceberg-mcp-server/issues"
 documentation = "https://github.com/dragonejt/iceberg-mcp-server/wiki"
