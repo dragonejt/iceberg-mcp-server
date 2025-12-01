@@ -5,9 +5,11 @@ to list tables, read table metadata, and page table contents into Python
 dictionaries.
 """
 
-from typing import Annotated, Dict, List, Optional, Union
+from pathlib import Path
+from typing import Annotated, Dict, List, Literal, Optional, Union
 
-import pyarrow as pa
+import polars as pl
+from pyarrow import Table
 from pydantic import Field
 from pyiceberg.catalog import Catalog
 from pyiceberg.table.metadata import TableMetadata
@@ -36,7 +38,7 @@ class TableTools:
     async def list_tables(
         self,
         namespace: Annotated[Union[str, Identifier], Field(description="The namespace to list tables from.")],
-    ) -> List[Identifier]:
+    ) -> Annotated[List[Identifier], Field(description="List of table identifiers in namespace.")]:
         """List all tables in a namespace.
 
         Args:
@@ -51,7 +53,7 @@ class TableTools:
     async def read_table_metadata(
         self,
         identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
-    ) -> TableMetadata:
+    ) -> Annotated[TableMetadata, Field(description="Table metadata object.")]:
         """Retrieve metadata for a table.
 
         Args:
@@ -66,7 +68,7 @@ class TableTools:
 
     async def read_table_contents(
         self,
-        identifier: Annotated[Union[str, Identifier], Field(description="Table identifier")],
+        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
         start: Annotated[
             int,
             Field(description="Row index to start pagination, inclusive."),
@@ -75,7 +77,7 @@ class TableTools:
             Optional[int],
             Field(description="Row index to end pagination, exclusive."),
         ] = None,
-    ) -> str:
+    ) -> Annotated[str, Field(description="JSON representation of the table rows.")]:
         """Retrieve table contents with optional pagination.
 
         Supports negative indices for both `start` and `end` parameters to enable
@@ -122,27 +124,99 @@ class TableTools:
 
         return df.write_json()
 
-    async def create_table_from_contents(
+    async def create_table(
         self,
         identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
-        contents: Annotated[Dict[str, List], Field(description="Columnar dictionary of table contents.")],
-    ) -> None:
+        contents: Annotated[
+            Optional[Dict[str, List]], Field(description="Columnar dictionary of table contents.")
+        ] = None,
+        file: Annotated[Optional[Path], Field(description="Path to table file.")] = None,
+    ) -> Annotated[str, Field(description="JSON representation of last 5 table rows.")]:
         """Create a new Iceberg table and populate it with contents.
 
         Creates a new table in the catalog with the specified identifier using
-        the schema inferred from the provided contents, then overwrites the table
-        with the actual data.
+        the schema inferred from the provided contents/file, then overwrites the table
+        with the actual data. Either contents or file must be provided.
 
         Args:
             identifier: The identifier of the table to create.
             contents: A columnar dictionary where keys are column names and values
                 are lists of column data.
+            file: Path to table file. All file types supported by Polars can be used.
 
         Raises:
-            ValueError: If the table already exists in the catalog.
-            TypeError: If the contents cannot be converted to a PyArrow table.
+            ValueError: If none or both contents and file are provided.
         """
-        table_contents = pa.table(contents)
+
+        if contents is not None and file is not None:
+            raise ValueError("Only one of contents or file can be provided!")
+        elif contents is not None:
+            table_contents = Table.from_pydict(contents)
+        elif file is not None:
+            table_contents = self._read_table_from_file(file)
+        else:
+            raise ValueError("One of contents or file must be provided!")
+
         table = self.catalog.create_table(identifier, table_contents.schema)
 
         table.overwrite(table_contents)
+
+        return await self.read_table_contents(identifier, start=-5)
+
+    async def write_table(
+        self,
+        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        mode: Annotated[
+            Literal["append", "overwrite"], Field(description="Append the contents or overwrite the table.")
+        ],
+        contents: Annotated[
+            Optional[Dict[str, List]], Field(description="Columnar dictionary of table contents.")
+        ] = None,
+        file: Annotated[Optional[Path], Field(description="Path to table file.")] = None,
+    ) -> Annotated[str, Field(description="JSON representation of last 5 table rows.")]:
+        if contents is not None and file is not None:
+            raise ValueError("Only one of contents or file can be provided!")
+        elif contents is not None:
+            table_contents = Table.from_pydict(contents)
+        elif file is not None:
+            table_contents = self._read_table_from_file(file)
+        else:
+            raise ValueError("One of contents or file must be provided!")
+
+        table = self.catalog.load_table(identifier)
+
+        match mode:
+            case "append":
+                table.append(table_contents)
+            case "overwrite":
+                table.overwrite(table_contents)
+            case _:
+                raise ValueError(f"Invalid write table mode provided: {mode}")
+
+        return await self.read_table_contents(identifier, start=-5)
+
+    async def delete_table(
+        self, identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")]
+    ) -> Annotated[List[Identifier], Field(description="List of remaining tables in namespace.")]:
+        self.catalog.drop_table(identifier)
+
+        namespace = Catalog.namespace_from(identifier)
+
+        return await self.list_tables(namespace)
+
+    def _read_table_from_file(self, file: Annotated[Path, Field(description="Path of table file.")]) -> Table:
+        match file.suffix:
+            case ".csv":
+                return pl.read_csv(file).to_arrow()
+            case ".xslx" | ".xls":
+                return pl.read_excel(file).to_arrow()
+            case ".json":
+                return pl.read_json(file).to_arrow()
+            case ".parquet" | ".pqt":
+                return pl.read_parquet(file).to_arrow()
+            case ".avro":
+                return pl.read_avro(file).to_arrow()
+            case ".feather" | ".ftr":
+                return pl.read_ipc(file).to_arrow()
+            case _:
+                raise ValueError(f"Unsupported file extension: {file.suffix}")

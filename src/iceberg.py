@@ -15,12 +15,15 @@ mcp = FastMCP(
 namespace = NamespaceTools(catalog)
 mcp.tool(namespace.list_namespaces, annotations=ToolAnnotations(readOnlyHint=True))
 mcp.tool(namespace.create_namespace)
+mcp.tool(namespace.delete_namespace, annotations=ToolAnnotations(destructiveHint=True))
 
 table = TableTools(catalog)
 mcp.tool(table.list_tables, annotations=ToolAnnotations(readOnlyHint=True))
 mcp.tool(table.read_table_metadata, annotations=ToolAnnotations(readOnlyHint=True))
 mcp.tool(table.read_table_contents, annotations=ToolAnnotations(readOnlyHint=True))
-mcp.tool(table.create_table_from_contents)
+mcp.tool(table.create_table)
+mcp.tool(table.write_table)
+mcp.tool(table.delete_table, annotations=ToolAnnotations(destructiveHint=True))
 
 if duckdb is not None:
     query = QueryTools(duckdb)

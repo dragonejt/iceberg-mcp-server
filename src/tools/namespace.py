@@ -33,7 +33,7 @@ class NamespaceTools:
     async def list_namespaces(
         self,
         namespace: Annotated[Union[str, Identifier], Field(description="Parent namespace identifier to search.")] = (),
-    ) -> List[Identifier]:
+    ) -> Annotated[List[Identifier], Field(description="List of namespace identifiers.")]:
         """List all namespaces under a parent namespace.
 
         Args:
@@ -49,7 +49,7 @@ class NamespaceTools:
     async def create_namespace(
         self,
         namespace: Annotated[Union[str, Identifier], Field(description="Namespace to create.")],
-    ) -> List[Identifier]:
+    ) -> Annotated[List[Identifier], Field(description="List of all namespaces under root namespace.")]:
         """Create a new namespace if it does not already exist.
 
         Args:
@@ -60,4 +60,12 @@ class NamespaceTools:
         """
         self.catalog.create_namespace_if_not_exists(namespace)
 
-        return self.catalog.list_namespaces()
+        return await self.list_namespaces()
+
+    async def delete_namespace(
+        self,
+        namespace: Annotated[Union[str, Identifier], Field(description="Namespace to delete.")],
+    ) -> Annotated[List[Identifier], Field(description="List of remaining namespaces under root namespace.")]:
+        self.catalog.drop_namespace(namespace)
+
+        return await self.list_namespaces()

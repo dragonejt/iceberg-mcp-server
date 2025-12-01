@@ -4,10 +4,11 @@ This module provides a small helper class to execute SQL queries and return
 results as a list of dictionaries.
 """
 
-from typing import Optional
+from typing import Annotated, Optional
 
 from duckdb import DuckDBPyConnection
 from duckdb import connect as ddb_connect
+from pydantic import Field
 from pyiceberg.catalog import Catalog, CatalogType, infer_catalog_type
 
 
@@ -29,7 +30,9 @@ class QueryTools:
         """
         self.duckdb = duckdb
 
-    async def sql_query(self, query: str) -> str:
+    async def sql_query(
+        self, query: Annotated[str, Field(description="DuckDB SQL query.")]
+    ) -> Annotated[str, Field(description="Query results by row as JSON.")]:
         """Execute a SQL query and return results as a list of dicts.
 
         The query is executed using the embedded DuckDB connection and the
