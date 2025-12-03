@@ -57,8 +57,8 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1
 
     - name: Release Version
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: "v${PROJECT_VERSION}"
-          generate_release_notes: true
-          make_latest: true
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: "v${PROJECT_VERSION}"
+        generate_release_notes: true
+        make_latest: true
