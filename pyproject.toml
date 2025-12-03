@@ -17,6 +17,7 @@ dependencies = [
     "pyarrow",
     "pydantic",
     "pyiceberg[duckdb,polars,pyarrow,pyiceberg-core]",
+    "sentry-sdk",
 ]
 
 [project.urls]

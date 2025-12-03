@@ -1,10 +1,25 @@
+from os import getenv
+
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
 from pyiceberg.catalog import load_catalog
+from sentry_sdk import init as sentry_init
+from sentry_sdk.integrations.mcp import MCPIntegration
 
 from src.tools.namespace import NamespaceTools
 from src.tools.query import QueryTools, load_duckdb
 from src.tools.table import TableTools
+
+if getenv("SENTRY_DSN") is not None:
+    sentry_init(
+        dsn=getenv("SENTRY_DSN"),
+        enable_tracing=True,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        enable_logs=True,
+        send_default_pii=True,
+        integrations=[MCPIntegration()],
+    )
 
 catalog = load_catalog()
 duckdb = load_duckdb(catalog)
