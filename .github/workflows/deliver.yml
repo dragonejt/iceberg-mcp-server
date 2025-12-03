@@ -37,6 +37,7 @@ jobs:
       url: https://pypi.org/p/iceberg-mcp-server
     permissions:
       id-token: write
+      contents: write
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v5
