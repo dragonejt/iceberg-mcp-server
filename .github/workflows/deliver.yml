@@ -62,7 +62,7 @@ jobs:
     - name: Prepare Release
       run: |
         echo PROJECT_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('iceberg-mcp-server'))") > $GITHUB_ENV
-        uv run pip download iceberg-mcp-server==${{ env.PROJECT_VERSION } --only-binary=:all: --no-deps
+        uv run pip download iceberg-mcp-server==${{ env.PROJECT_VERSION }} --only-binary=:all: --no-deps
 
     - name: Release Version
       uses: softprops/action-gh-release@v2
