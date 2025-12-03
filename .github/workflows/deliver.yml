@@ -27,7 +27,7 @@ jobs:
     - name: Commit Version
       uses: stefanzweifel/git-auto-commit-action@v7
       with:
-        commit_message: "chore: bump version to v${PROJECT_VERSION}"
+        commit_message: "chore: bump version to v${{ env.PROJECT_VERSION }}"
 
   publish:
     runs-on: ubuntu-latest
@@ -59,9 +59,9 @@ jobs:
     - name: Release Version
       uses: softprops/action-gh-release@v2
       with:
-        tag_name: "v${PROJECT_VERSION}"
+        tag_name: "v${{ env.PROJECT_VERSION }}"
         generate_release_notes: true
         make_latest: true
         body: |
-          View on PyPI at: https://pypi.org/project/iceberg-mcp-server/${PROJECT_VERSION}/
-          Run `uvx iceberg-mcp-server@latest` to use with latest release, and `uvx iceberg-mcp-server@${PROJECT_VERSION}` to use with this specific release.
+          View on PyPI at: https://pypi.org/project/iceberg-mcp-server/${{ env.PROJECT_VERSION }}}/
+          Run `uvx iceberg-mcp-server@latest` to use with latest release, and `uvx iceberg-mcp-server@${{ env.PROJECT_VERSION }}` to use with this specific release.
