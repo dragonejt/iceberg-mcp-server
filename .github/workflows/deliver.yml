@@ -1,13 +1,37 @@
 name: delivery
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v5
+      with:
+        fetch-depth: 0
+
+    - name: Setup uv and Python
+      uses: astral-sh/setup-uv@v6
+      with:
+        version: latest
+
+    - name: Bump Version
+      run: |
+        uv version --bump patch
+        echo PROJECT_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('iceberg-mcp-server'))") > $GITHUB_ENV
+
+    - name: Commit Version
+      uses: stefanzweifel/git-auto-commit-action@v7
+      with:
+        commit_message: "chore: bump version to v${PROJECT_VERSION}"
+
   publish:
     runs-on: ubuntu-latest
+    needs: version
     environment:
       name: pypi
       url: https://pypi.org/p/iceberg-mcp-server
@@ -25,7 +49,16 @@ jobs:
         version: latest
 
     - name: uv Build
-      run: uv build
+      run: |
+        uv build
+        echo PROJECT_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('iceberg-mcp-server'))") > $GITHUB_ENV
 
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+
+    - name: Release Version
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${PROJECT_VERSION}"
+          generate_release_notes: true
+          make_latest: true
