@@ -62,3 +62,6 @@ jobs:
         tag_name: "v${PROJECT_VERSION}"
         generate_release_notes: true
         make_latest: true
+        body: |
+          View on PyPI at: https://pypi.org/project/iceberg-mcp-server/${PROJECT_VERSION}/
+          Run `uvx iceberg-mcp-server@latest` to use with latest release, and `uvx iceberg-mcp-server@${PROJECT_VERSION}` to use with this specific release.
