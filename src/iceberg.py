@@ -45,9 +45,5 @@ if duckdb is not None:
     mcp.tool(query.sql_query, annotations=ToolAnnotations(destructiveHint=True))
 
 
-def main() -> None:
-    mcp.run()
-
-
 if __name__ == "__main__":
-    main()
+    mcp.run()
