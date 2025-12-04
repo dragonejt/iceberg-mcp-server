@@ -54,23 +54,20 @@ jobs:
         version: latest
 
     - name: Build with uv
-      run: uv build
+      run: |
+        uv build
+        echo PROJECT_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('iceberg-mcp-server'))") > $GITHUB_ENV
         
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
-
-    - name: Prepare Release
-      run: |
-        echo PROJECT_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('iceberg-mcp-server'))") > $GITHUB_ENV
-        uv run pip download iceberg-mcp-server==${{ env.PROJECT_VERSION }} --only-binary=:all: --no-deps
-
+        
     - name: Release Version
       uses: softprops/action-gh-release@v2
       with:
         tag_name: "v${{ env.PROJECT_VERSION }}"
         generate_release_notes: true
         make_latest: true
-        files: iceberg_mcp_server-${{ env.PROJECT_VERSION }}-py3-none-any.whl
+        files: dist/iceberg_mcp_server-${{ env.PROJECT_VERSION }}-py3-none-any.whl
         body: |
           * View on PyPI at: https://pypi.org/project/iceberg-mcp-server/${{ env.PROJECT_VERSION }}/
           * Run `uvx iceberg-mcp-server@latest` to use with latest release, or `uvx iceberg-mcp-server@${{ env.PROJECT_VERSION }}` to use with this specific release.
