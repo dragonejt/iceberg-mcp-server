@@ -21,7 +21,7 @@ if getenv("SENTRY_DSN") is not None:
         integrations=[MCPIntegration()],
     )
 
-catalog = load_catalog()
+catalog = load_catalog(getenv("ICEBERG_CATALOG"))
 duckdb = load_duckdb(catalog)
 mcp = FastMCP(
     name="Iceberg MCP Server",
