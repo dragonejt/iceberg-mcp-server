@@ -20,14 +20,23 @@ args = ["iceberg-mcp-server"]
 ```
 
 ### Configuration
-iceberg-mcp-server supports the [PyIceberg methods of configuration](https://py.iceberg.apache.org/configuration/). `.pyiceberg.yaml` is the recommended persistent method of configuration. For example, to connect to a standard REST-based Iceberg catalog with `~/.pyiceberg.yaml`:
+#### `.pyiceberg.yaml` File
+iceberg-mcp-server supports the [PyIceberg configuration methods](https://py.iceberg.apache.org/configuration/). `.pyiceberg.yaml` is the recommended persistent method of configuration. For example, to connect to a standard REST-based Iceberg catalog with `~/.pyiceberg.yaml`:
 ```yaml
 catalog:
-  default: # iceberg-mcp-server will only load the catalog named "default"!
+  default: # iceberg-mcp-server loads the catalog named "default" if not in env vars
     uri: <catalog-uri>
     token: <catalog-token>
     warehouse: <warehouse>
 ```
+#### Environment Variables
+One of the other PyIceberg configuration methods is setting specific environment variables, which iceberg-mcp-server supports as well. There are also environment variables specific to iceberg-mcp-server that can be set:
+```bash
+ICEBERG_CATALOG="default"
+SENTRY_DSN="https://<sentry-key>@o<organization-id>.ingest.us.sentry.io/<project-id>"
+```
+* `ICEBERG_CATALOG` allows you to set which catalog will be loaded. By default, the catalog named `default` will be loaded based on PyIceberg behavior.
+* Optionally, you may send telemetry to [Sentry](https://sentry.io/welcome/) by specifying a `SENTRY_DSN`. This will send traces, profiles, logs, and default PII to Sentry, as well as enable the Sentry MCP integration.
 
 ## Local Development
 ### Building and Running
