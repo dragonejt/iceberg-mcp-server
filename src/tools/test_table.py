@@ -31,7 +31,7 @@ class TestTable(IsolatedAsyncioTestCase):
         self.mock_table.inspect.snapshots.return_value = [self.mock_snapshot1, self.mock_snapshot2]
 
         self.df = DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
-        self.mock_snapshot2.summary = {"total-records": 3}
+        self.mock_snapshot2.summary = {"total-records": len(self.df)}
         self.mock_table.to_polars.side_effect = OSError
         self.mock_table.scan.return_value.to_polars.return_value = self.df
 
