@@ -13,6 +13,7 @@ from pyarrow import Table
 from pydantic import Field
 from pyiceberg.catalog import Catalog
 from pyiceberg.table.metadata import TableMetadata
+from pyiceberg.table.snapshots import Snapshot
 from pyiceberg.typedef import Identifier
 
 
@@ -65,6 +66,34 @@ class TableTools:
         table = self.catalog.load_table(identifier)
 
         return table.metadata
+
+    async def read_table_snapshots(
+        self,
+        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        snapshot_id: Annotated[Optional[int], Field(description="Optional snapshot ID for time travel.")] = None,
+        limit: Annotated[Optional[int], Field(description="Maximum number of snapshots to return.")] = None,
+    ) -> Annotated[List[Snapshot], Field(description="List of snapshot objects.")]:
+        """
+        Retrieve snapshot information for a table.
+
+        Args:
+            identifier: The identifier of the table.
+            snapshot_id: Optional snapshot ID for time travel queries.
+            limit: Optional limit on number of snapshots to return.
+
+        Returns:
+            List of snapshot objects.
+        """
+        table = self.catalog.load_table(identifier)
+        snapshots = table.inspect.snapshots()
+
+        if snapshot_id is not None:
+            snapshots = [s for s in snapshots if s.snapshot_id == snapshot_id]
+
+        if limit is not None:
+            snapshots = snapshots[:limit]
+
+        return snapshots
 
     async def read_table_contents(
         self,
