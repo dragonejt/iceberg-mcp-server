@@ -1,6 +1,6 @@
 [project]
 name = "iceberg-mcp-server"
-version = "0.1.13"
+version = "0.1.14"
 description = "MCP Server for Apache Iceberg"
 readme = "README.md"
 license = "MPL-2.0"
