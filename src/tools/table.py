@@ -10,6 +10,9 @@ from typing import Annotated, Dict, List, Literal, Optional, Union
 
 import polars as pl
 from pyarrow import Table
+from pyarrow.csv import CSVWriter
+from pyarrow.ipc import RecordBatchFileWriter
+from pyarrow.parquet import ParquetWriter
 from pydantic import Field
 from pyiceberg.catalog import Catalog
 from pyiceberg.table.metadata import TableMetadata
@@ -153,6 +156,40 @@ class TableTools:
 
         return df.write_json()
 
+    async def download_table_contents(
+        self,
+        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        file: Annotated[Path, Field(description="Path of downloaded table file.")],
+    ) -> None:
+        """Download table contents to a file.
+
+        Args:
+            identifier: The identifier of the table.
+            file: Path of downloaded table file.
+
+        Raises:
+            FileNotFoundError: If the parent directory does not exist.
+            ValueError: If the file extension is unsupported.
+        """
+        if file.parent.is_dir() is False:
+            raise FileNotFoundError(f"Parent directory {file.parent.resolve()} must exist!")
+
+        table = self.catalog.load_table(identifier)
+        batch_reader = table.scan().to_arrow_batch_reader()
+
+        match file.suffix:
+            case ".csv":
+                writer = CSVWriter(file, batch_reader.schema)
+            case ".parquet" | ".pqt":
+                writer = ParquetWriter(file, batch_reader.schema)
+            case ".feather" | ".ftr":
+                writer = RecordBatchFileWriter(file, batch_reader.schema)
+            case _:
+                raise ValueError(f"Unsupported file extension: {file.suffix}")
+
+        list(map(writer.write_batch, batch_reader))
+        writer.close()
+
     async def create_table(
         self,
         identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
@@ -203,6 +240,22 @@ class TableTools:
         ] = None,
         file: Annotated[Optional[Path], Field(description="Path to table file.")] = None,
     ) -> Annotated[str, Field(description="JSON representation of last 5 table rows.")]:
+        """Write data to an existing Iceberg table.
+
+        Args:
+            identifier: The identifier of the table.
+            mode: Append the contents or overwrite the table.
+            contents: A columnar dictionary where keys are column names and values
+                are lists of column data.
+            file: Path to table file. All file types supported by Polars can be used.
+
+        Returns:
+            JSON representation of last 5 table rows.
+
+        Raises:
+            ValueError: If both contents and file are provided, or if neither is provided,
+                or if an invalid write mode is provided.
+        """
         if contents is not None and file is not None:
             raise ValueError("Only one of contents or file can be provided!")
         elif contents is not None:
@@ -227,6 +280,14 @@ class TableTools:
     async def delete_table(
         self, identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")]
     ) -> Annotated[List[Identifier], Field(description="List of remaining tables in namespace.")]:
+        """Delete a table from the catalog.
+
+        Args:
+            identifier: The identifier of the table.
+
+        Returns:
+            List of remaining tables in namespace.
+        """
         self.catalog.drop_table(identifier)
 
         namespace = Catalog.namespace_from(identifier)
@@ -234,6 +295,17 @@ class TableTools:
         return await self.list_tables(namespace)
 
     def _read_table_from_file(self, file: Annotated[Path, Field(description="Path of table file.")]) -> Table:
+        """Read table contents from a file.
+
+        Args:
+            file: Path of table file.
+
+        Returns:
+            PyArrow Table containing the file contents.
+
+        Raises:
+            ValueError: If the file extension is unsupported.
+        """
         match file.suffix:
             case ".csv":
                 return pl.read_csv(file).to_arrow()

@@ -66,6 +66,14 @@ class NamespaceTools:
         self,
         namespace: Annotated[Union[str, Identifier], Field(description="Namespace to delete.")],
     ) -> Annotated[List[Identifier], Field(description="List of remaining namespaces under root namespace.")]:
+        """Delete a namespace from the catalog.
+
+        Args:
+            namespace: Namespace to delete.
+
+        Returns:
+            List of remaining namespaces under root namespace.
+        """
         self.catalog.drop_namespace(namespace)
 
         return await self.list_namespaces()
