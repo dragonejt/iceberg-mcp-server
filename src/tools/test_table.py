@@ -1,3 +1,5 @@
+import tempfile
+from pathlib import Path
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 
@@ -113,3 +115,83 @@ class TestTable(IsolatedAsyncioTestCase):
         self.assertEqual(self.mock_catalog.drop_table.call_args, (("test_table",),))
         self.assertEqual(self.mock_catalog.drop_table.call_count, 1)
         self.assertEqual(result, [("remaining_table",)])
+
+    async def test_download_table_contents_with_csv_file(self) -> None:
+        with tempfile.TemporaryDirectory() as parent_dir:
+            file_path = Path(parent_dir) / "test.csv"
+
+            self.mock_table.scan.return_value.to_arrow_batch_reader.return_value = self.df.to_arrow().to_reader()
+
+            await self.tools.download_table_contents("test_table", file_path)
+
+            self.assertTrue(file_path.is_file())
+
+    async def test_download_table_contents_with_unsupported_file_extension(self) -> None:
+        with self.assertRaises(ValueError):
+            await self.tools.download_table_contents("test_table", Path("test.unsupported"))
+
+    async def test_download_table_contents_with_nonexistent_parent_directory(self) -> None:
+        with self.assertRaises(FileNotFoundError):
+            await self.tools.download_table_contents("test_table", Path("/nonexistent/test.csv"))
+
+    async def test_create_table_with_contents(self) -> None:
+        self.mock_catalog.create_table.return_value = self.mock_table
+
+        result = await self.tools.create_table("test_table", self.df.to_dict(as_series=False))
+
+        self.mock_catalog.create_table.assert_called_once()
+        self.mock_table.overwrite.assert_called_once()
+        self.assertIsInstance(result, str)
+
+    async def test_create_table_with_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = Path(temp_dir) / "test.csv"
+            self.df.write_csv(file_path)
+
+            self.mock_catalog.create_table.return_value = self.mock_table
+
+            await self.tools.create_table("test_table", file=file_path)
+
+            self.mock_catalog.create_table.assert_called_once()
+            self.mock_table.overwrite.assert_called_once()
+
+    async def test_create_table_with_both_contents_and_file(self) -> None:
+        with self.assertRaises(ValueError):
+            await self.tools.create_table("test_table", self.df.to_dict(as_series=False), file=Path("test.csv"))
+
+    async def test_create_table_with_neither_contents_nor_file(self) -> None:
+        with self.assertRaises(ValueError):
+            await self.tools.create_table("test_table")
+
+    async def test_write_table_append_mode(self) -> None:
+        await self.tools.write_table("test_table", "append", self.df.to_dict(as_series=False))
+
+        self.mock_table.append.assert_called_once()
+
+    async def test_write_table_overwrite_mode(self) -> None:
+        await self.tools.write_table("test_table", "overwrite", self.df.to_dict(as_series=False))
+
+        self.mock_table.overwrite.assert_called_once()
+
+    async def test_write_table_with_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_path = Path(temp_dir) / "test.csv"
+            self.df.write_csv(file_path)
+
+            await self.tools.write_table("test_table", "append", file=file_path)
+
+            self.mock_table.append.assert_called_once()
+
+    async def test_write_table_with_both_contents_and_file(self) -> None:
+        with self.assertRaises(ValueError) as context:
+            await self.tools.write_table(
+                "test_table", "append", self.df.to_dict(as_series=False), file=Path("test.csv")
+            )
+
+        self.assertIn("Only one of contents or file can be provided", str(context.exception))
+
+    async def test_write_table_with_neither_contents_nor_file(self) -> None:
+        with self.assertRaises(ValueError) as context:
+            await self.tools.write_table("test_table", "append")
+
+        self.assertIn("One of contents or file must be provided", str(context.exception))
