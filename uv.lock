@@ -809,7 +809,7 @@ wheels = [
 
 [[package]]
 name = "iceberg-mcp-server"
-version = "0.1.15"
+version = "0.1.16"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
