@@ -96,10 +96,6 @@ def load_duckdb(catalog: Catalog) -> Optional[DuckDBPyConnection]:
 
     Returns:
         The configured DuckDB connection.
-
-    Raises:
-        ValueError: If the catalog type specified by the environment is not
-            supported.
     """
     con = ddb_connect()
     con.load_extension("iceberg")
@@ -107,30 +103,85 @@ def load_duckdb(catalog: Catalog) -> Optional[DuckDBPyConnection]:
     catalog_type = infer_catalog_type(catalog.name, catalog.properties)
 
     match catalog_type:
+        case CatalogType.GLUE:
+            con.load_extension("aws")
+            if "glue.profile-name" in catalog.properties:
+                # Glue Catalog using AWS profile
+                con.sql(f"""
+                    CREATE OR REPLACE SECRET (
+                        TYPE s3,
+                        PROVIDER credential_chain,
+                        CHAIN config,
+                        PROFILE '{catalog.properties["glue.profile-name"]}'
+                        REGION '{catalog.properties["glue.region"]}'
+                    );
+                    """)
+            elif "glue.access-key-id" in catalog.properties:
+                # Glue Catalog using configured credentials
+                con.sql(f"""
+                        CREATE OR REPLACE SECRET (
+                            TYPE s3,
+                            PROVIDER config,
+                            KEY_ID '{catalog.properties["glue.access-key-id"]}',
+                            SECRET '{catalog.properties["glue.secret-access-key"]}',
+                            REGION '{catalog.properties["glue.region"]}'
+                        );
+                        """)
+            else:
+                return None
+            con.sql(f"""
+                    ATTACH '{catalog.properties["glue.id"]}' AS catalog (
+                    TYPE iceberg,
+                    ENDPOINT_TYPE 'glue'
+                    );
+                    """)
         case CatalogType.REST:
             if "oauth2-server-uri" in catalog.properties:
+                # REST Catalog using OAuth
                 con.sql(f"""
-                        CREATE SECRET iceberg_secret (
+                        CREATE OR REPLACE SECRET (
                             TYPE iceberg,
                             CLIENT_ID '{catalog.properties["client-id"]}',
                             CLIENT_SECRET '{catalog.properties["client-secret"]}',
                             OAUTH2_SERVER_URI '{catalog.properties["oauth2-server-uri"]}'
                         );
                         """)
-            else:
                 con.sql(f"""
-                        CREATE SECRET iceberg_secret (
+                        ATTACH '{catalog.properties.get("warehouse", "")}' AS catalog (
+                            TYPE iceberg,
+                            ENDPOINT '{catalog.properties["uri"]}'
+                        );
+                        """)
+            elif "s3tablescatalog" in catalog.properties.get("warehouse", ""):
+                # S3 Tables Catalog
+                con.load_extension("aws")
+                con.sql("""
+                        CREATE OR REPLACE SECRET (
+                            TYPE s3,
+                            PROVIDER credential_chain
+                        );
+                        """)
+                con.sql(f"""
+                        ATTACH '{catalog.properties["warehouse"]}' AS catalog (
+                        TYPE iceberg,
+                        ENDPOINT_TYPE s3_tables
+                        );
+                        """)
+
+            else:
+                # REST Catalog using token
+                con.sql(f"""
+                        CREATE SECRET (
                             TYPE iceberg,
                             TOKEN '{catalog.properties["token"]}'
                         );
                         """)
-            con.sql(f"""
-                    ATTACH '{catalog.properties.get("warehouse", "")}' AS catalog (
-                        TYPE iceberg,
-                        SECRET iceberg_secret,
-                        ENDPOINT '{catalog.properties["uri"]}'
-                    );
-                    """)
+                con.sql(f"""
+                        ATTACH '{catalog.properties.get("warehouse", "")}' AS catalog (
+                            TYPE iceberg,
+                            ENDPOINT '{catalog.properties["uri"]}'
+                        );
+                        """)
 
         case _:
             return None
