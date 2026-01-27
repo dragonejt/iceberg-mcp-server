@@ -35,17 +35,17 @@ if duckdb is not None:
     query = QueryTools(duckdb)
     mcp.tool(query.sql_query, annotations=ToolAnnotations(destructiveHint=True))
 
+if getenv("SENTRY_DSN") is not None:
+    sentry_init(
+        dsn=getenv("SENTRY_DSN"),
+        enable_tracing=True,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        enable_logs=True,
+        send_default_pii=True,
+        integrations=[MCPIntegration()],
+    )
+
 
 if __name__ == "__main__":
     mcp.run()
-
-    if getenv("SENTRY_DSN") is not None:
-        sentry_init(
-            dsn=getenv("SENTRY_DSN"),
-            enable_tracing=True,
-            traces_sample_rate=1.0,
-            profiles_sample_rate=1.0,
-            enable_logs=True,
-            send_default_pii=True,
-            integrations=[MCPIntegration()],
-        )
