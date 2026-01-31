@@ -63,6 +63,15 @@ jobs:
         
     - name: Publish to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1
+
+    - name: Install mcp-publisher
+      run: curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+
+    - name: Authenticate to MCP Registry
+      run: ./mcp-publisher login github-oidc
+
+    - name: Publish to MCP Registry
+      run: ./mcp-publisher publish
         
     - name: Release Version
       uses: softprops/action-gh-release@v2
@@ -74,12 +83,3 @@ jobs:
         body: |
           * View on PyPI at: https://pypi.org/project/iceberg-mcp-server/${{ env.PROJECT_VERSION }}/
           * Run `uvx iceberg-mcp-server@latest` to use with latest release, or `uvx iceberg-mcp-server@${{ env.PROJECT_VERSION }}` to use with this specific release.
-
-    - name: Install mcp-publisher
-      run: curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
-
-    - name: Authenticate to MCP Registry
-      run: ./mcp-publisher login github-oidc
-
-    - name: Publish to MCP Registry
-      run: ./mcp-publisher publish
