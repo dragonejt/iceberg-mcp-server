@@ -1,4 +1,5 @@
 # iceberg-mcp-server
+<!-- mcp-name: io.github.dragonejt/iceberg-mcp-server -->
 ![downloads](https://img.shields.io/pypi/dm/iceberg-mcp-server)
 ![integration](https://github.com/dragonejt/iceberg-mcp-server/actions/workflows/integrate.yml/badge.svg)
 ![delivery](https://github.com/dragonejt/iceberg-mcp-server/actions/workflows/deliver.yml/badge.svg)
