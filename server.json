@@ -1,0 +1,17 @@
+{
+    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+    "name": "io.github.dragonejt/iceberg-mcp-server",
+    "title": "Iceberg MCP Server",
+    "description": "MCP Server for Apache Iceberg",
+    "version": "0.1.18",
+    "packages": [
+        {
+            "registryType": "pypi",
+            "identifier": "iceberg-mcp-server",
+            "version": "0.1.18",
+            "transport": {
+                "type": "stdio"
+            }
+        }
+    ]
+}
