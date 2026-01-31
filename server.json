@@ -3,12 +3,12 @@
   "name": "io.github.dragonejt/iceberg-mcp-server",
   "title": "Iceberg MCP Server",
   "description": "MCP Server for Apache Iceberg",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "iceberg-mcp-server",
-      "version": "0.1.21",
+      "version": "0.1.22",
       "transport": {
         "type": "stdio"
       }

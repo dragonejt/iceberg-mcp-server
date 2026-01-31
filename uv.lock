@@ -805,7 +805,7 @@ wheels = [
 
 [[package]]
 name = "iceberg-mcp-server"
-version = "0.1.21"
+version = "0.1.22"
 source = { editable = "." }
 dependencies = [
     { name = "duckdb" },
