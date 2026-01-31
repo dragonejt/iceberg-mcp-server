@@ -23,7 +23,9 @@ jobs:
       run: |
         uv version --bump patch
         echo PROJECT_VERSION=$(uv run python -c "from importlib.metadata import version; print(version('iceberg-mcp-server'))") > $GITHUB_ENV
-        jq --arg v "${{ env.PROJECT_VERSION }}" '.version = $v | .packages |= map(.version = $v)' server.json > server.tmp && mv server.tmp server.json
+
+    - name: Update server.json
+      run: jq --arg v "${{ env.PROJECT_VERSION }}" '.version = $v | .packages |= map(.version = $v)' server.json > server.tmp && mv server.tmp server.json
 
     - name: Commit Version
       uses: stefanzweifel/git-auto-commit-action@v7
