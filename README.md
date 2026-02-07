@@ -57,4 +57,4 @@ ruff check --fix # linting
 ruff format # formatting
 ty check # type checking
 ```
-The Ruff configuration is found in `pyproject.toml`, and all autofixable issues will be autofixed. If you use VS Code or a fork for development, the [VS Code Ruff Extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) will enable viewing Ruff issues within your editor. Additionally, Ruff, ty, and CodeQL analysis will be run in the [integration workflow](https://github.com/dragonejt/iceberg-mcp-server/blob/main/.github/workflows/integrate.yml).
+The Ruff configuration is found in `pyproject.toml`, and all autofixable issues will be autofixed. If you use VS Code or a fork for development, the [VS Code Ruff Extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff) and [VS Code ty Extension](https://marketplace.visualstudio.com/items?itemName=astral-sh.ty) will enable viewing issues from Ruff and ty within your editor. Additionally, Ruff, ty, and CodeQL analysis will be run in the [integration workflow](https://github.com/dragonejt/iceberg-mcp-server/blob/main/.github/workflows/integrate.yml).

@@ -4,7 +4,7 @@ This module exposes NamespaceTools, a thin helper around a Catalog
 instance to list and create namespaces.
 """
 
-from typing import Annotated, List, Union
+from typing import Annotated
 
 from pydantic import Field
 from pyiceberg.catalog import Catalog
@@ -32,8 +32,8 @@ class NamespaceTools:
 
     async def list_namespaces(
         self,
-        namespace: Annotated[Union[str, Identifier], Field(description="Parent namespace identifier to search.")] = (),
-    ) -> Annotated[List[Identifier], Field(description="List of namespace identifiers.")]:
+        namespace: Annotated[str | Identifier, Field(description="Parent namespace identifier to search.")] = (),
+    ) -> Annotated[list[Identifier], Field(description="List of namespace identifiers.")]:
         """List all namespaces under a parent namespace.
 
         Args:
@@ -48,8 +48,8 @@ class NamespaceTools:
 
     async def create_namespace(
         self,
-        namespace: Annotated[Union[str, Identifier], Field(description="Namespace to create.")],
-    ) -> Annotated[List[Identifier], Field(description="List of all namespaces under root namespace.")]:
+        namespace: Annotated[str | Identifier, Field(description="Namespace to create.")],
+    ) -> Annotated[list[Identifier], Field(description="List of all namespaces under root namespace.")]:
         """Create a new namespace if it does not already exist.
 
         Args:
@@ -64,8 +64,8 @@ class NamespaceTools:
 
     async def delete_namespace(
         self,
-        namespace: Annotated[Union[str, Identifier], Field(description="Namespace to delete.")],
-    ) -> Annotated[List[Identifier], Field(description="List of remaining namespaces under root namespace.")]:
+        namespace: Annotated[str | Identifier, Field(description="Namespace to delete.")],
+    ) -> Annotated[list[Identifier], Field(description="List of remaining namespaces under root namespace.")]:
         """Delete a namespace from the catalog.
 
         Args:

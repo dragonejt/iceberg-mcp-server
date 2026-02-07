@@ -5,7 +5,7 @@ results as a list of dictionaries.
 """
 
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 from duckdb import DuckDBPyConnection
 from duckdb import connect as ddb_connect
@@ -37,7 +37,7 @@ class QueryTools:
     async def sql_query(
         self,
         query: Annotated[str, Field(description="DuckDB SQL query.")],
-        file: Annotated[Optional[Path], Field(description="File path to write SQL query results.")] = None,
+        file: Annotated[Path | None, Field(description="File path to write SQL query results.")] = None,
     ) -> Annotated[str, Field(description="Query results by row as JSON.")]:
         """Execute a SQL query and return results as a list of dicts or write to a file.
 
@@ -87,7 +87,7 @@ class QueryTools:
             return f"Query result file: {file.resolve()} has file size of {file.stat().st_size} bytes."
 
 
-def load_duckdb(catalog: Catalog) -> Optional[DuckDBPyConnection]:
+def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
     """Create and configure a DuckDB connection with the Iceberg extension.
 
     The function connects to an in-memory DuckDB instance, loads the

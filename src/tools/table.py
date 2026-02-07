@@ -6,7 +6,7 @@ dictionaries.
 """
 
 from pathlib import Path
-from typing import Annotated, Dict, List, Literal, Optional, Union
+from typing import Annotated, Literal
 
 import polars as pl
 from pyarrow import Table
@@ -41,8 +41,8 @@ class TableTools:
 
     async def list_tables(
         self,
-        namespace: Annotated[Union[str, Identifier], Field(description="The namespace to list tables from.")],
-    ) -> Annotated[List[Identifier], Field(description="List of table identifiers in namespace.")]:
+        namespace: Annotated[str | Identifier, Field(description="The namespace to list tables from.")],
+    ) -> Annotated[list[Identifier], Field(description="List of table identifiers in namespace.")]:
         """List all tables in a namespace.
 
         Args:
@@ -56,7 +56,7 @@ class TableTools:
 
     async def read_table_metadata(
         self,
-        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
     ) -> Annotated[TableMetadata, Field(description="Table metadata object.")]:
         """Retrieve metadata for a table.
 
@@ -72,10 +72,10 @@ class TableTools:
 
     async def read_table_snapshots(
         self,
-        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
-        snapshot_id: Annotated[Optional[int], Field(description="Optional snapshot ID for time travel.")] = None,
-        limit: Annotated[Optional[int], Field(description="Maximum number of snapshots to return.")] = None,
-    ) -> Annotated[List[Snapshot], Field(description="List of snapshot objects.")]:
+        identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
+        snapshot_id: Annotated[int | None, Field(description="Optional snapshot ID for time travel.")] = None,
+        limit: Annotated[int | None, Field(description="Maximum number of snapshots to return.")] = None,
+    ) -> Annotated[list[Snapshot], Field(description="List of snapshot objects.")]:
         """
         Retrieve snapshot information for a table.
 
@@ -100,13 +100,13 @@ class TableTools:
 
     async def read_table_contents(
         self,
-        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
         start: Annotated[
             int,
             Field(description="Row index to start pagination, inclusive."),
         ] = 0,
         end: Annotated[
-            Optional[int],
+            int | None,
             Field(description="Row index to end pagination, exclusive."),
         ] = None,
     ) -> Annotated[str, Field(description="JSON representation of the table rows.")]:
@@ -158,7 +158,7 @@ class TableTools:
 
     async def download_table_contents(
         self,
-        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
         file: Annotated[Path, Field(description="Path of downloaded table file.")],
     ) -> None:
         """Download table contents to a file.
@@ -192,11 +192,9 @@ class TableTools:
 
     async def create_table(
         self,
-        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
-        contents: Annotated[
-            Optional[Dict[str, List]], Field(description="Columnar dictionary of table contents.")
-        ] = None,
-        file: Annotated[Optional[Path], Field(description="Path to table file.")] = None,
+        identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
+        contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
+        file: Annotated[Path | None, Field(description="Path to table file.")] = None,
     ) -> Annotated[str, Field(description="JSON representation of last 5 table rows.")]:
         """Create a new Iceberg table and populate it with contents.
 
@@ -231,14 +229,12 @@ class TableTools:
 
     async def write_table(
         self,
-        identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")],
+        identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
         mode: Annotated[
             Literal["append", "overwrite"], Field(description="Append the contents or overwrite the table.")
         ],
-        contents: Annotated[
-            Optional[Dict[str, List]], Field(description="Columnar dictionary of table contents.")
-        ] = None,
-        file: Annotated[Optional[Path], Field(description="Path to table file.")] = None,
+        contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
+        file: Annotated[Path | None, Field(description="Path to table file.")] = None,
     ) -> Annotated[str, Field(description="JSON representation of last 5 table rows.")]:
         """Write data to an existing Iceberg table.
 
@@ -278,8 +274,8 @@ class TableTools:
         return await self.read_table_contents(identifier, start=-5)
 
     async def delete_table(
-        self, identifier: Annotated[Union[str, Identifier], Field(description="The identifier of the table.")]
-    ) -> Annotated[List[Identifier], Field(description="List of remaining tables in namespace.")]:
+        self, identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")]
+    ) -> Annotated[list[Identifier], Field(description="List of remaining tables in namespace.")]:
         """Delete a table from the catalog.
 
         Args:
