@@ -33,8 +33,6 @@ class TestTable(IsolatedAsyncioTestCase):
         self.mock_table.inspect.snapshots.return_value = [self.mock_snapshot1, self.mock_snapshot2]
 
         self.df = DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
-        self.mock_snapshot2.summary = {"total-records": len(self.df)}
-        self.mock_table.to_polars.side_effect = OSError
         self.mock_table.scan.return_value.to_polars.return_value = self.df
 
     async def test_list_tables_returns_table_list(self) -> None:
@@ -59,8 +57,9 @@ class TestTable(IsolatedAsyncioTestCase):
 
         self.assertEqual(result, self.df.write_json())
 
-    async def test_read_table_contents_with_pagination_returns_page(self) -> None:
-        result = await self.tools.read_table_contents("test_table", end=2)
+    async def test_read_table_contents_with_limit_returns_page(self) -> None:
+        self.mock_table.scan.return_value.to_polars.return_value = self.df.slice(0, 2)
+        result = await self.tools.read_table_contents("test_table", limit=2)
 
         self.assertEqual(result, DataFrame({"a": [1, 2], "b": [3, 4]}).write_json())
 

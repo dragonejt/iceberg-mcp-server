@@ -101,58 +101,23 @@ class TableTools:
     async def read_table_contents(
         self,
         identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
-        start: Annotated[
-            int,
-            Field(description="Row index to start pagination, inclusive."),
-        ] = 0,
-        end: Annotated[
+        limit: Annotated[
             int | None,
-            Field(description="Row index to end pagination, exclusive."),
+            Field(description="Maximum number of rows to return."),
         ] = None,
     ) -> Annotated[str, Field(description="JSON representation of the table rows.")]:
-        """Retrieve table contents with optional pagination.
-
-        Supports negative indices for both `start` and `end` parameters to enable
-        reading from the end of the table. When ``end`` is ``None`` (default),
-        all rows from ``start`` to the end of the table are returned.
+        """Retrieve table contents.
 
         Args:
             identifier: The identifier of the table.
-            start: Row index to start pagination (inclusive). Defaults to
-                ``0``. Negative indices count from the end of the table.
-            end: Row index to end pagination (exclusive).
-                Defaults to ``None`` (end of table). Negative indices count
-                from the end of the table.
+            limit: Maximum number of rows to return. If ``None`` (default),
+                all rows are returned.
 
         Returns:
             JSON representation of the table rows.
         """
         table = self.catalog.load_table(identifier)
-
-        snapshot = table.current_snapshot()
-        if snapshot is None:
-            raise ValueError(f"Table: {identifier} has no current snapshot.")
-        summary = snapshot.summary
-        if summary is None:
-            raise ValueError(f"Snapshot for Table: {identifier} has no summary.")
-        row_limit = int(summary.get("total-records", "0"))
-
-        if start < 0:
-            start += row_limit
-        if end is None:
-            end = row_limit
-        elif end < 0:
-            end = max(0, end + row_limit)
-        else:
-            end = min(end, row_limit)
-
-        try:
-            df = table.to_polars()
-            df = await df.slice(start, end - start).collect_async()
-
-        except OSError:
-            df = table.scan().to_polars()
-            df = df.slice(start, end - start)
+        df = table.scan(limit=limit).to_polars()
 
         return df.write_json()
 
@@ -195,7 +160,7 @@ class TableTools:
         identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
         contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
         file: Annotated[Path | None, Field(description="Path to table file.")] = None,
-    ) -> Annotated[str, Field(description="JSON representation of last 5 table rows.")]:
+    ) -> Annotated[str, Field(description="JSON representation of 5 table rows.")]:
         """Create a new Iceberg table and populate it with contents.
 
         Creates a new table in the catalog with the specified identifier using
@@ -225,7 +190,7 @@ class TableTools:
 
         table.overwrite(table_contents)
 
-        return await self.read_table_contents(identifier, start=-5)
+        return await self.read_table_contents(identifier, limit=5)
 
     async def write_table(
         self,
@@ -235,7 +200,7 @@ class TableTools:
         ],
         contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
         file: Annotated[Path | None, Field(description="Path to table file.")] = None,
-    ) -> Annotated[str, Field(description="JSON representation of last 5 table rows.")]:
+    ) -> Annotated[str, Field(description="JSON representation of 5 table rows.")]:
         """Write data to an existing Iceberg table.
 
         Args:
@@ -246,7 +211,7 @@ class TableTools:
             file: Path to table file. All file types supported by Polars can be used.
 
         Returns:
-            JSON representation of last 5 table rows.
+            JSON representation of 5 table rows.
 
         Raises:
             ValueError: If both contents and file are provided, or if neither is provided,
@@ -271,7 +236,7 @@ class TableTools:
             case _:
                 raise ValueError(f"Invalid write table mode provided: {mode}")
 
-        return await self.read_table_contents(identifier, start=-5)
+        return await self.read_table_contents(identifier, limit=5)
 
     async def delete_table(
         self, identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")]
