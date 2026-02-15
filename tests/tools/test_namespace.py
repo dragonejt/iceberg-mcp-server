@@ -3,7 +3,7 @@ from unittest.mock import Mock
 
 from pyiceberg.catalog import Catalog
 
-from src.tools.namespace import NamespaceTools
+from iceberg_mcp_server.tools.namespace import NamespaceTools
 
 
 class TestNamespace(IsolatedAsyncioTestCase):

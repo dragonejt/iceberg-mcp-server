@@ -7,7 +7,7 @@ from duckdb import DuckDBPyConnection, DuckDBPyRelation
 from polars import DataFrame
 from pyiceberg.catalog import Catalog, CatalogType
 
-from src.tools.query import QueryTools, load_duckdb
+from iceberg_mcp_server.tools.query import QueryTools, load_duckdb
 
 
 class TestQuerySQL(IsolatedAsyncioTestCase):
@@ -49,8 +49,8 @@ class TestQuerySQL(IsolatedAsyncioTestCase):
 
 
 class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
-    @patch("src.tools.query.infer_catalog_type")
-    @patch("src.tools.query.ddb_connect")
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_rest_catalog_oauth2(
         self,
         mock_connect,
@@ -75,8 +75,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn.load_extension.assert_called_with("iceberg")
         self.assertEqual(result, mock_conn)
 
-    @patch("src.tools.query.infer_catalog_type")
-    @patch("src.tools.query.ddb_connect")
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_rest_catalog_token(
         self,
         mock_connect,
@@ -95,8 +95,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn.load_extension.assert_called_with("iceberg")
         self.assertEqual(result, mock_conn)
 
-    @patch("src.tools.query.infer_catalog_type")
-    @patch("src.tools.query.ddb_connect")
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_unsupported_catalog_type(
         self,
         mock_connect,

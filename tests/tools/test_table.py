@@ -9,7 +9,7 @@ from pyiceberg.table import Table
 from pyiceberg.table.metadata import TableMetadata
 from pyiceberg.table.snapshots import Snapshot
 
-from src.tools.table import TableTools
+from iceberg_mcp_server.tools.table import TableTools
 
 
 class TestTable(IsolatedAsyncioTestCase):

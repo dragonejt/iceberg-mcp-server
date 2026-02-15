@@ -6,9 +6,9 @@ from pyiceberg.catalog import load_catalog
 from sentry_sdk import init as sentry_init
 from sentry_sdk.integrations.mcp import MCPIntegration
 
-from src.tools.namespace import NamespaceTools
-from src.tools.query import QueryTools, load_duckdb
-from src.tools.table import TableTools
+from iceberg_mcp_server.tools.namespace import NamespaceTools
+from iceberg_mcp_server.tools.query import QueryTools, load_duckdb
+from iceberg_mcp_server.tools.table import TableTools
 
 catalog = load_catalog(getenv("ICEBERG_CATALOG"))
 duckdb = load_duckdb(catalog)
