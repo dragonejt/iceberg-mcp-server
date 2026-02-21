@@ -12,7 +12,7 @@ requires-python = ">=3.12"
 dependencies = [
     "duckdb",
     "fastexcel",
-    "fastmcp",
+    "fastmcp[tasks]",
     "polars",
     "pyarrow",
     "pydantic",
