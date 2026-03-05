@@ -50,7 +50,7 @@ class TestTable(IsolatedAsyncioTestCase):
 
         result = await self.tools.list_tables("namespace", describe=True)
 
-        self.assertEqual(result, [("table1", "Test table 1")])
+        self.assertEqual(result, [("table1", "description: Test table 1")])
         self.assertEqual(self.mock_catalog.load_table.call_count, 1)
 
     async def test_list_tables_with_describe_returns_tables_without_descriptions(self) -> None:
@@ -182,6 +182,7 @@ class TestTable(IsolatedAsyncioTestCase):
     async def test_update_table_with_multiple_properties(self) -> None:
         mock_transaction = Mock()
         self.mock_table.transaction.return_value = mock_transaction
+        mock_transaction.set_properties.return_value.commit_transaction.return_value.metadata = self.mock_metadata
         self.mock_metadata.properties = {"description": "Updated description", "format": "parquet"}
 
         result = await self.tools.update_table(
@@ -196,6 +197,7 @@ class TestTable(IsolatedAsyncioTestCase):
     async def test_update_table_with_non_existent_property(self) -> None:
         mock_transaction = Mock()
         self.mock_table.transaction.return_value = mock_transaction
+        mock_transaction.set_properties.return_value.commit_transaction.return_value.metadata = self.mock_metadata
         self.mock_metadata.properties = {"new_property": "new_value"}
 
         result = await self.tools.update_table("test_table", {"new_property": "new_value"})

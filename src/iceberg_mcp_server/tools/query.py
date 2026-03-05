@@ -47,7 +47,7 @@ class QueryTools:
         If a file is provided, the results are written to the specified file in the
         appropriate format (CSV, Parquet, or Feather).
 
-        Note:
+        NOTE:
             When querying Iceberg tables, the SQL table name should be of the format catalog.table_identifier.
 
         Args:
