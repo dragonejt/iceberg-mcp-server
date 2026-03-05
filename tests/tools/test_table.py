@@ -44,16 +44,16 @@ class TestTable(IsolatedAsyncioTestCase):
         self.assertEqual(self.mock_catalog.list_tables.call_args, (("namespace",),))
         self.assertEqual(self.mock_catalog.list_tables.call_count, 1)
 
-    async def test_list_tables_with_describe_returns_tables_with_descriptions(self) -> None:
+    async def test_list_tables_with_describe_returns_tables_with_comments(self) -> None:
         self.mock_catalog.list_tables.return_value = [("table1",)]
-        self.mock_metadata.properties = {"description": "Test table 1"}
+        self.mock_metadata.properties = {"comment": "Test table 1"}
 
         result = await self.tools.list_tables("namespace", describe=True)
 
-        self.assertEqual(result, [("table1", "description: Test table 1")])
+        self.assertEqual(result, [("table1", "comment: Test table 1")])
         self.assertEqual(self.mock_catalog.load_table.call_count, 1)
 
-    async def test_list_tables_with_describe_returns_tables_without_descriptions(self) -> None:
+    async def test_list_tables_with_describe_returns_tables_without_comments(self) -> None:
         self.mock_catalog.list_tables.return_value = [("table1",)]
         self.mock_metadata.properties = None
 
@@ -62,7 +62,7 @@ class TestTable(IsolatedAsyncioTestCase):
         self.assertEqual(result, [("table1",)])
         self.assertEqual(self.mock_catalog.load_table.call_count, 1)
 
-    async def test_list_tables_with_describe_returns_tables_without_description_key(self) -> None:
+    async def test_list_tables_with_describe_returns_tables_without_comment_key(self) -> None:
         self.mock_catalog.list_tables.return_value = [("table1",)]
         self.mock_metadata.properties = {"other_property": "value"}
 
@@ -162,7 +162,7 @@ class TestTable(IsolatedAsyncioTestCase):
     async def test_create_table_with_properties(self) -> None:
         self.mock_catalog.create_table.return_value = self.mock_table
 
-        properties = {"description": "Test table description", "format": "parquet"}
+        properties = {"comment": "Test table comment", "format": "parquet"}
 
         await self.tools.create_table("test_table", self.df.to_dict(as_series=False), properties=properties)
 
@@ -183,16 +183,16 @@ class TestTable(IsolatedAsyncioTestCase):
         mock_transaction = Mock()
         self.mock_table.transaction.return_value = mock_transaction
         mock_transaction.set_properties.return_value.commit_transaction.return_value.metadata = self.mock_metadata
-        self.mock_metadata.properties = {"description": "Updated description", "format": "parquet"}
+        self.mock_metadata.properties = {"comment": "Updated comment", "format": "parquet"}
 
         result = await self.tools.update_table(
-            "test_table", {"description": "Updated description", "format": "parquet"}
+            "test_table", {"comment": "Updated comment", "format": "parquet"}
         )
 
         mock_transaction.set_properties.assert_called_once_with(
-            {"description": "Updated description", "format": "parquet"}
+            {"comment": "Updated comment", "format": "parquet"}
         )
-        self.assertEqual(result, {"description": "Updated description", "format": "parquet"})
+        self.assertEqual(result, {"comment": "Updated comment", "format": "parquet"})
 
     async def test_update_table_with_non_existent_property(self) -> None:
         mock_transaction = Mock()

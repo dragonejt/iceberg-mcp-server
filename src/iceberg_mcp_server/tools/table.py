@@ -42,43 +42,43 @@ class TableTools:
     async def list_tables(
         self,
         namespace: Annotated[str | Identifier, Field(description="The namespace to list tables from.")],
-        describe: Annotated[bool, Field(description="Include table descriptions from table properties.")] = False,
+        describe: Annotated[bool, Field(description="Include table comments from table properties.")] = False,
     ) -> Annotated[
-        list[Identifier], Field(description="List of table identifiers in namespace, optionally with descriptions.")
+        list[Identifier], Field(description="List of table identifiers in namespace, optionally with comments.")
     ]:
         """List all tables in a namespace.
 
         Args:
             namespace: The namespace to list tables from.
-            describe: If true, include table descriptions from table properties.
+            describe: If true, include table comments from table properties.
 
         Returns:
             A list of table identifiers in the namespace. If describe is true,
-            returns a list of tuples with (identifier, description).
+            returns a list of tuples with (identifier, comments).
         """
         tables = self.catalog.list_tables(namespace)
 
         if describe is False:
             return tables
 
-        def format_table_with_description(table_id: Identifier):
-            """Format a table identifier with its description if available.
+        def format_table_with_comment(table_id: Identifier):
+            """Format a table identifier with its comment if available.
 
             Args:
                 table_id: The table identifier (tuple).
 
             Returns:
-                Either (*table_id, description) tuple if description exists,
+                Either (*table_id, comment) tuple if comment exists,
                 or just table_id otherwise.
             """
             table = self.catalog.load_table(table_id)
             if table.metadata.properties:
-                description = table.metadata.properties.get("description")
-                if description is not None:
-                    return table_id + (f"description: {description}",)
+                comment = table.metadata.properties.get("comment")
+                if comment is not None:
+                    return table_id + (f"comment: {comment}",)
             return table_id
 
-        return list(map(format_table_with_description, tables))
+        return list(map(format_table_with_comment, tables))
 
     async def read_table_metadata(
         self,
@@ -193,7 +193,7 @@ class TableTools:
         Creates a new table in the catalog with the specified identifier using
         the schema inferred from the provided contents/file, then overwrites the table
         with the actual data. Either contents or file must be provided.
-        NOTE: The "description" property is a special property that will be displayed
+        NOTE: The "comment" property is a special property that will be displayed
             when listing tables with the list_tables method.
 
         Args:
@@ -225,10 +225,10 @@ class TableTools:
     async def update_table(
         self,
         identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
-        properties: Annotated[Properties, Field(description="Table properties to update, e.g., description.")],
+        properties: Annotated[Properties, Field(description="Table properties to update.")],
     ) -> Annotated[Properties, Field(description="Updated table properties.")]:
         """Update table properties.
-        NOTE: The "description" property is a special property that will be displayed
+        NOTE: The "comment" property is a special property that will be displayed
             when listing tables with the list_tables method.
 
         Args:
