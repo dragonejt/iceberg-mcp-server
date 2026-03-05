@@ -28,6 +28,7 @@ mcp.tool(table.read_table_contents, annotations=ToolAnnotations(readOnlyHint=Tru
 mcp.tool(table.download_table_contents, task=True)
 mcp.tool(table.read_table_snapshots, annotations=ToolAnnotations(readOnlyHint=True))
 mcp.tool(table.create_table)
+mcp.tool(table.update_table, annotations=ToolAnnotations(idempotentHint=True))
 mcp.tool(table.write_table)
 mcp.tool(table.delete_table, annotations=ToolAnnotations(destructiveHint=True))
 

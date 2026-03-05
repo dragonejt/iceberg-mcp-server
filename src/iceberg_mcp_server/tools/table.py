@@ -75,7 +75,7 @@ class TableTools:
             if table.metadata.properties:
                 description = table.metadata.properties.get("description")
                 if description is not None:
-                    return table_id + (description,)
+                    return table_id + (f"description: {description}",)
             return table_id
 
         return list(map(format_table_with_description, tables))
@@ -239,10 +239,9 @@ class TableTools:
             The updated table properties.
         """
         table = self.catalog.load_table(identifier)
-        table.transaction().set_properties(properties)
+        table = table.transaction().set_properties(properties).commit_transaction()
 
-        updated_table = self.catalog.load_table(identifier)
-        return updated_table.metadata.properties
+        return table.metadata.properties
 
     async def write_table(
         self,
