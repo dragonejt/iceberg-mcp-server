@@ -44,6 +44,33 @@ class TestTable(IsolatedAsyncioTestCase):
         self.assertEqual(self.mock_catalog.list_tables.call_args, (("namespace",),))
         self.assertEqual(self.mock_catalog.list_tables.call_count, 1)
 
+    async def test_list_tables_with_describe_returns_tables_with_descriptions(self) -> None:
+        self.mock_catalog.list_tables.return_value = [("table1",)]
+        self.mock_metadata.properties = {"description": "Test table 1"}
+
+        result = await self.tools.list_tables("namespace", describe=True)
+
+        self.assertEqual(result, [("table1", "Test table 1")])
+        self.assertEqual(self.mock_catalog.load_table.call_count, 1)
+
+    async def test_list_tables_with_describe_returns_tables_without_descriptions(self) -> None:
+        self.mock_catalog.list_tables.return_value = [("table1",)]
+        self.mock_metadata.properties = None
+
+        result = await self.tools.list_tables("namespace", describe=True)
+
+        self.assertEqual(result, [("table1",)])
+        self.assertEqual(self.mock_catalog.load_table.call_count, 1)
+
+    async def test_list_tables_with_describe_returns_tables_without_description_key(self) -> None:
+        self.mock_catalog.list_tables.return_value = [("table1",)]
+        self.mock_metadata.properties = {"other_property": "value"}
+
+        result = await self.tools.list_tables("namespace", describe=True)
+
+        self.assertEqual(result, [("table1",)])
+        self.assertEqual(self.mock_catalog.load_table.call_count, 1)
+
     async def test_read_table_metadata_returns_table_metadata(self) -> None:
         result = await self.tools.read_table_metadata("test_table")
 
@@ -62,28 +89,6 @@ class TestTable(IsolatedAsyncioTestCase):
         result = await self.tools.read_table_contents("test_table", limit=2)
 
         self.assertEqual(result, DataFrame({"a": [1, 2], "b": [3, 4]}).write_json())
-
-    async def test_create_table_returns_tail(self) -> None:
-        self.mock_catalog.create_table.return_value = self.mock_table
-
-        await self.tools.create_table("test_table", self.df.to_dict(as_series=False))
-
-        self.mock_catalog.create_table.assert_called_with("test_table", self.df.to_arrow().schema)
-        self.mock_table.overwrite.assert_called_with(self.df.to_arrow())
-
-    async def test_overwrite_table_returns_tail(self) -> None:
-        self.mock_catalog.create_table.return_value = self.mock_table
-
-        await self.tools.write_table("test_table", "overwrite", self.df.to_dict(as_series=False))
-
-        self.mock_table.overwrite.assert_called_with(self.df.to_arrow())
-
-    async def test_append_table_returns_tail(self) -> None:
-        self.mock_catalog.create_table.return_value = self.mock_table
-
-        await self.tools.write_table("test_table", "append", self.df.to_dict(as_series=False))
-
-        self.mock_table.append.assert_called_with(self.df.to_arrow())
 
     async def test_read_table_snapshots_returns_all_snapshots(self) -> None:
         result = await self.tools.read_table_snapshots("test_table")
@@ -154,6 +159,18 @@ class TestTable(IsolatedAsyncioTestCase):
             self.mock_catalog.create_table.assert_called_once()
             self.mock_table.overwrite.assert_called_once()
 
+    async def test_create_table_with_properties(self) -> None:
+        self.mock_catalog.create_table.return_value = self.mock_table
+
+        properties = {"description": "Test table description", "format": "parquet"}
+
+        await self.tools.create_table("test_table", self.df.to_dict(as_series=False), properties=properties)
+
+        self.mock_catalog.create_table.assert_called_once_with(
+            "test_table", self.df.to_arrow().schema, properties=properties
+        )
+        self.mock_table.overwrite.assert_called_once()
+
     async def test_create_table_with_both_contents_and_file(self) -> None:
         with self.assertRaises(ValueError):
             await self.tools.create_table("test_table", self.df.to_dict(as_series=False), file=Path("test.csv"))
@@ -161,6 +178,30 @@ class TestTable(IsolatedAsyncioTestCase):
     async def test_create_table_with_neither_contents_nor_file(self) -> None:
         with self.assertRaises(ValueError):
             await self.tools.create_table("test_table")
+
+    async def test_update_table_with_multiple_properties(self) -> None:
+        mock_transaction = Mock()
+        self.mock_table.transaction.return_value = mock_transaction
+        self.mock_metadata.properties = {"description": "Updated description", "format": "parquet"}
+
+        result = await self.tools.update_table(
+            "test_table", {"description": "Updated description", "format": "parquet"}
+        )
+
+        mock_transaction.set_properties.assert_called_once_with(
+            {"description": "Updated description", "format": "parquet"}
+        )
+        self.assertEqual(result, {"description": "Updated description", "format": "parquet"})
+
+    async def test_update_table_with_non_existent_property(self) -> None:
+        mock_transaction = Mock()
+        self.mock_table.transaction.return_value = mock_transaction
+        self.mock_metadata.properties = {"new_property": "new_value"}
+
+        result = await self.tools.update_table("test_table", {"new_property": "new_value"})
+
+        mock_transaction.set_properties.assert_called_once_with({"new_property": "new_value"})
+        self.assertEqual(result, {"new_property": "new_value"})
 
     async def test_write_table_append_mode(self) -> None:
         await self.tools.write_table("test_table", "append", self.df.to_dict(as_series=False))

@@ -17,7 +17,7 @@ from pydantic import Field
 from pyiceberg.catalog import Catalog
 from pyiceberg.table.metadata import TableMetadata
 from pyiceberg.table.snapshots import Snapshot
-from pyiceberg.typedef import Identifier
+from pyiceberg.typedef import EMPTY_DICT, Identifier, Properties
 
 
 class TableTools:
@@ -42,17 +42,43 @@ class TableTools:
     async def list_tables(
         self,
         namespace: Annotated[str | Identifier, Field(description="The namespace to list tables from.")],
-    ) -> Annotated[list[Identifier], Field(description="List of table identifiers in namespace.")]:
+        describe: Annotated[bool, Field(description="Include table descriptions from table properties.")] = False,
+    ) -> Annotated[
+        list[Identifier], Field(description="List of table identifiers in namespace, optionally with descriptions.")
+    ]:
         """List all tables in a namespace.
 
         Args:
             namespace: The namespace to list tables from.
+            describe: If true, include table descriptions from table properties.
 
         Returns:
-            A list of table identifiers in the namespace.
+            A list of table identifiers in the namespace. If describe is true,
+            returns a list of tuples with (identifier, description).
         """
+        tables = self.catalog.list_tables(namespace)
 
-        return self.catalog.list_tables(namespace)
+        if describe is False:
+            return tables
+
+        def format_table_with_description(table_id: Identifier):
+            """Format a table identifier with its description if available.
+
+            Args:
+                table_id: The table identifier (tuple).
+
+            Returns:
+                Either (*table_id, description) tuple if description exists,
+                or just table_id otherwise.
+            """
+            table = self.catalog.load_table(table_id)
+            if table.metadata.properties:
+                description = table.metadata.properties.get("description")
+                if description is not None:
+                    return table_id + (description,)
+            return table_id
+
+        return list(map(format_table_with_description, tables))
 
     async def read_table_metadata(
         self,
@@ -160,18 +186,22 @@ class TableTools:
         identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
         contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
         file: Annotated[Path | None, Field(description="Path to table file.")] = None,
+        properties: Annotated[Properties, Field(description="Table properties to set")] = EMPTY_DICT,
     ) -> Annotated[str, Field(description="JSON representation of 5 table rows.")]:
         """Create a new Iceberg table and populate it with contents.
 
         Creates a new table in the catalog with the specified identifier using
         the schema inferred from the provided contents/file, then overwrites the table
         with the actual data. Either contents or file must be provided.
+        NOTE: The "description" property is a special property that will be displayed
+            when listing tables with the list_tables method.
 
         Args:
             identifier: The identifier of the table to create.
             contents: A columnar dictionary where keys are column names and values
                 are lists of column data.
             file: Path to table file. All file types supported by Polars can be used.
+            properties: Optional table properties to set on the table.
 
         Raises:
             ValueError: If none or both contents and file are provided.
@@ -186,11 +216,33 @@ class TableTools:
         else:
             raise ValueError("One of contents or file must be provided!")
 
-        table = self.catalog.create_table(identifier, table_contents.schema)
+        table = self.catalog.create_table(identifier, table_contents.schema, properties=properties)
 
         table.overwrite(table_contents)
 
         return await self.read_table_contents(identifier, limit=5)
+
+    async def update_table(
+        self,
+        identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
+        properties: Annotated[Properties, Field(description="Table properties to update, e.g., description.")],
+    ) -> Annotated[Properties, Field(description="Updated table properties.")]:
+        """Update table properties.
+        NOTE: The "description" property is a special property that will be displayed
+            when listing tables with the list_tables method.
+
+        Args:
+            identifier: The identifier of the table to update.
+            properties: Table properties to update.
+
+        Returns:
+            The updated table properties.
+        """
+        table = self.catalog.load_table(identifier)
+        table.transaction().set_properties(properties)
+
+        updated_table = self.catalog.load_table(identifier)
+        return updated_table.metadata.properties
 
     async def write_table(
         self,
