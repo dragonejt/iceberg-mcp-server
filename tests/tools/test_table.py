@@ -185,13 +185,9 @@ class TestTable(IsolatedAsyncioTestCase):
         mock_transaction.set_properties.return_value.commit_transaction.return_value.metadata = self.mock_metadata
         self.mock_metadata.properties = {"comment": "Updated comment", "format": "parquet"}
 
-        result = await self.tools.update_table(
-            "test_table", {"comment": "Updated comment", "format": "parquet"}
-        )
+        result = await self.tools.update_table("test_table", {"comment": "Updated comment", "format": "parquet"})
 
-        mock_transaction.set_properties.assert_called_once_with(
-            {"comment": "Updated comment", "format": "parquet"}
-        )
+        mock_transaction.set_properties.assert_called_once_with({"comment": "Updated comment", "format": "parquet"})
         self.assertEqual(result, {"comment": "Updated comment", "format": "parquet"})
 
     async def test_update_table_with_non_existent_property(self) -> None:
