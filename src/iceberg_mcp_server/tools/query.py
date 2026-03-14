@@ -87,7 +87,7 @@ class QueryTools:
             return f"Query result file: {file.resolve()} has file size of {file.stat().st_size} bytes."
 
 
-def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
+def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: PLR0912
     """Create and configure a DuckDB connection with the Iceberg extension.
 
     The function connects to an in-memory DuckDB instance, loads the
@@ -98,6 +98,7 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
         The configured DuckDB connection.
     """
     con = ddb_connect()
+    con.install_extension("iceberg")
     con.load_extension("iceberg")
 
     properties = catalog.properties
@@ -109,7 +110,9 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
 
     match catalog_type:
         case CatalogType.GLUE:
+            con.install_extension("aws")
             con.load_extension("aws")
+            region = properties.get("glue.region", properties.get("client.region"))
             if "glue.profile-name" in properties:
                 # Glue Catalog using AWS profile
                 con.sql(f"""
@@ -118,7 +121,7 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
                         PROVIDER credential_chain,
                         CHAIN config,
                         PROFILE '{properties["glue.profile-name"]}',
-                        REGION '{properties["glue.region"]}'
+                        REGION '{region}'
                     );
                     """)
             elif "glue.access-key-id" in properties:
@@ -129,7 +132,29 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
                             PROVIDER config,
                             KEY_ID '{properties["glue.access-key-id"]}',
                             SECRET '{properties["glue.secret-access-key"]}',
-                            REGION '{properties["glue.region"]}'
+                            REGION '{region}'
+                        );
+                        """)
+            elif "client.profile-name" in properties:
+                # Unified AWS credentials using profile
+                con.sql(f"""
+                    CREATE OR REPLACE SECRET (
+                        TYPE s3,
+                        PROVIDER credential_chain,
+                        CHAIN config,
+                        PROFILE '{properties["client.profile-name"]}',
+                        REGION '{region}'
+                    );
+                    """)
+            elif "client.access-key-id" in properties:
+                # Unified AWS credentials using explicit keys
+                con.sql(f"""
+                        CREATE OR REPLACE SECRET (
+                            TYPE s3,
+                            PROVIDER config,
+                            KEY_ID '{properties["client.access-key-id"]}',
+                            SECRET '{properties["client.secret-access-key"]}',
+                            REGION '{region}'
                         );
                         """)
             else:
@@ -159,6 +184,7 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
                         """)
             elif "s3tablescatalog" in properties.get("warehouse", ""):
                 # S3 Tables Catalog
+                con.install_extension("aws")
                 con.load_extension("aws")
                 con.sql("""
                         CREATE OR REPLACE SECRET (

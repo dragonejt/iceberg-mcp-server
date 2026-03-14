@@ -50,7 +50,7 @@ class TestQuerySQL(IsolatedAsyncioTestCase):
 
 class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
-    def test_load_duckdb_with_glue_catalog_explicit_type(
+    def test_load_duckdb_with_glue_glue_profile(
         self,
         mock_connect,
     ) -> None:
@@ -68,6 +68,117 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         result = load_duckdb(mock_catalog)
 
+        mock_conn.install_extension.assert_any_call("iceberg")
+        mock_conn.install_extension.assert_any_call("aws")
+        mock_conn.load_extension.assert_any_call("iceberg")
+        mock_conn.load_extension.assert_any_call("aws")
+        self.assertEqual(result, mock_conn)
+
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
+    def test_load_duckdb_with_glue_catalog_client_profile(
+        self,
+        mock_connect,
+    ) -> None:
+        mock_catalog = Mock(spec=Catalog)
+        mock_catalog.name = "test_catalog"
+        mock_catalog.properties = {
+            "type": "glue",
+            "glue.id": "123456789012",
+            "client.region": "us-west-2",
+            "client.profile-name": "my-profile",
+        }
+
+        mock_conn = Mock(spec=DuckDBPyConnection)
+        mock_connect.return_value = mock_conn
+
+        result = load_duckdb(mock_catalog)
+
+        mock_conn.install_extension.assert_any_call("iceberg")
+        mock_conn.install_extension.assert_any_call("aws")
+        mock_conn.load_extension.assert_any_call("iceberg")
+        mock_conn.load_extension.assert_any_call("aws")
+        self.assertEqual(result, mock_conn)
+
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
+    def test_load_duckdb_with_glue_catalog_client_credentials(
+        self,
+        mock_connect,
+        mock_infer,
+    ) -> None:
+        mock_catalog = Mock(spec=Catalog)
+        mock_catalog.name = "test_catalog"
+        mock_catalog.properties = {
+            "type": "glue",
+            "glue.id": "123456789012",
+            "client.region": "eu-west-1",
+            "client.access-key-id": "AKIAIOSFODNN7EXAMPLE",
+            "client.secret-access-key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        }
+
+        mock_conn = Mock(spec=DuckDBPyConnection)
+        mock_connect.return_value = mock_conn
+        mock_infer.return_value = CatalogType.GLUE
+
+        result = load_duckdb(mock_catalog)
+
+        mock_conn.install_extension.assert_any_call("iceberg")
+        mock_conn.install_extension.assert_any_call("aws")
+        mock_conn.load_extension.assert_any_call("iceberg")
+        mock_conn.load_extension.assert_any_call("aws")
+        self.assertEqual(result, mock_conn)
+
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
+    def test_load_duckdb_with_glue_credentials(
+        self,
+        mock_connect,
+    ) -> None:
+        mock_catalog = Mock(spec=Catalog)
+        mock_catalog.name = "test_catalog"
+        mock_catalog.properties = {
+            "type": "glue",
+            "glue.id": "123456789012",
+            "glue.region": "us-east-1",
+            "glue.access-key-id": "AKIAIOSFODNN7EXAMPLE",
+            "glue.secret-access-key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        }
+
+        mock_conn = Mock(spec=DuckDBPyConnection)
+        mock_connect.return_value = mock_conn
+
+        result = load_duckdb(mock_catalog)
+
+        mock_conn.install_extension.assert_any_call("iceberg")
+        mock_conn.install_extension.assert_any_call("aws")
+        mock_conn.load_extension.assert_any_call("iceberg")
+        mock_conn.load_extension.assert_any_call("aws")
+        self.assertEqual(result, mock_conn)
+
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
+    def test_load_duckdb_with_glue_explicit_credentials(
+        self,
+        mock_connect,
+        mock_infer,
+    ) -> None:
+        mock_catalog = Mock(spec=Catalog)
+        mock_catalog.name = "test_catalog"
+        mock_catalog.properties = {
+            "type": "glue",
+            "glue.id": "123456789012",
+            "glue.region": "us-east-1",
+            "glue.access-key-id": "AKIAIOSFODNN7EXAMPLE",
+            "glue.secret-access-key": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+        }
+
+        mock_conn = Mock(spec=DuckDBPyConnection)
+        mock_connect.return_value = mock_conn
+        mock_infer.return_value = CatalogType.GLUE
+
+        result = load_duckdb(mock_catalog)
+
+        mock_conn.install_extension.assert_any_call("iceberg")
+        mock_conn.install_extension.assert_any_call("aws")
         mock_conn.load_extension.assert_any_call("iceberg")
         mock_conn.load_extension.assert_any_call("aws")
         self.assertEqual(result, mock_conn)
@@ -95,6 +206,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         result = load_duckdb(mock_catalog)
 
+        mock_conn.install_extension.assert_any_call("iceberg")
         mock_conn.load_extension.assert_called_with("iceberg")
         self.assertEqual(result, mock_conn)
 
@@ -115,7 +227,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         result = load_duckdb(mock_catalog)
 
-        mock_conn.load_extension.assert_called_with("iceberg")
+        mock_conn.install_extension.assert_called_with("iceberg")
         self.assertEqual(result, mock_conn)
 
     @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
@@ -131,7 +243,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
-        mock_infer.return_value = CatalogType.BIGQUERY  # Unsupported type
+        mock_infer.return_value = CatalogType.BIGQUERY
 
         result = load_duckdb(mock_catalog)
 
