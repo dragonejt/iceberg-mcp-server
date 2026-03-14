@@ -49,6 +49,29 @@ class TestQuerySQL(IsolatedAsyncioTestCase):
 
 
 class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
+    @patch("iceberg_mcp_server.tools.query.ddb_connect")
+    def test_load_duckdb_with_glue_catalog_explicit_type(
+        self,
+        mock_connect,
+    ) -> None:
+        mock_catalog = Mock(spec=Catalog)
+        mock_catalog.name = "test_catalog"
+        mock_catalog.properties = {
+            "type": "glue",
+            "glue.id": "123456789012",
+            "glue.region": "us-east-1",
+            "glue.profile-name": "default",
+        }
+
+        mock_conn = Mock(spec=DuckDBPyConnection)
+        mock_connect.return_value = mock_conn
+
+        result = load_duckdb(mock_catalog)
+
+        mock_conn.load_extension.assert_any_call("iceberg")
+        mock_conn.load_extension.assert_any_call("aws")
+        self.assertEqual(result, mock_conn)
+
     @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_rest_catalog_oauth2(

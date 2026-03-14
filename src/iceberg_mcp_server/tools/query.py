@@ -100,59 +100,64 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
     con = ddb_connect()
     con.load_extension("iceberg")
 
-    catalog_type = infer_catalog_type(catalog.name, catalog.properties)
+    properties = catalog.properties
+
+    if type_str := properties.get("type"):
+        catalog_type = CatalogType(type_str)
+    else:
+        catalog_type = infer_catalog_type(catalog.name, properties)
 
     match catalog_type:
         case CatalogType.GLUE:
             con.load_extension("aws")
-            if "glue.profile-name" in catalog.properties:
+            if "glue.profile-name" in properties:
                 # Glue Catalog using AWS profile
                 con.sql(f"""
                     CREATE OR REPLACE SECRET (
                         TYPE s3,
                         PROVIDER credential_chain,
                         CHAIN config,
-                        PROFILE '{catalog.properties["glue.profile-name"]}'
-                        REGION '{catalog.properties["glue.region"]}'
+                        PROFILE '{properties["glue.profile-name"]}',
+                        REGION '{properties["glue.region"]}'
                     );
                     """)
-            elif "glue.access-key-id" in catalog.properties:
+            elif "glue.access-key-id" in properties:
                 # Glue Catalog using configured credentials
                 con.sql(f"""
                         CREATE OR REPLACE SECRET (
                             TYPE s3,
                             PROVIDER config,
-                            KEY_ID '{catalog.properties["glue.access-key-id"]}',
-                            SECRET '{catalog.properties["glue.secret-access-key"]}',
-                            REGION '{catalog.properties["glue.region"]}'
+                            KEY_ID '{properties["glue.access-key-id"]}',
+                            SECRET '{properties["glue.secret-access-key"]}',
+                            REGION '{properties["glue.region"]}'
                         );
                         """)
             else:
                 return None
             con.sql(f"""
-                    ATTACH '{catalog.properties["glue.id"]}' AS catalog (
+                    ATTACH '{properties["glue.id"]}' AS catalog (
                     TYPE iceberg,
                     ENDPOINT_TYPE 'glue'
                     );
                     """)
         case CatalogType.REST:
-            if "oauth2-server-uri" in catalog.properties:
+            if "oauth2-server-uri" in properties:
                 # REST Catalog using OAuth
                 con.sql(f"""
                         CREATE OR REPLACE SECRET (
                             TYPE iceberg,
-                            CLIENT_ID '{catalog.properties["client-id"]}',
-                            CLIENT_SECRET '{catalog.properties["client-secret"]}',
-                            OAUTH2_SERVER_URI '{catalog.properties["oauth2-server-uri"]}'
+                            CLIENT_ID '{properties["client-id"]}',
+                            CLIENT_SECRET '{properties["client-secret"]}',
+                            OAUTH2_SERVER_URI '{properties["oauth2-server-uri"]}'
                         );
                         """)
                 con.sql(f"""
-                        ATTACH '{catalog.properties.get("warehouse", "")}' AS catalog (
+                        ATTACH '{properties.get("warehouse", "")}' AS catalog (
                             TYPE iceberg,
-                            ENDPOINT '{catalog.properties["uri"]}'
+                            ENDPOINT '{properties["uri"]}'
                         );
                         """)
-            elif "s3tablescatalog" in catalog.properties.get("warehouse", ""):
+            elif "s3tablescatalog" in properties.get("warehouse", ""):
                 # S3 Tables Catalog
                 con.load_extension("aws")
                 con.sql("""
@@ -162,7 +167,7 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
                         );
                         """)
                 con.sql(f"""
-                        ATTACH '{catalog.properties["warehouse"]}' AS catalog (
+                        ATTACH '{properties["warehouse"]}' AS catalog (
                         TYPE iceberg,
                         ENDPOINT_TYPE s3_tables
                         );
@@ -173,13 +178,13 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:
                 con.sql(f"""
                         CREATE SECRET (
                             TYPE iceberg,
-                            TOKEN '{catalog.properties["token"]}'
+                            TOKEN '{properties["token"]}'
                         );
                         """)
                 con.sql(f"""
-                        ATTACH '{catalog.properties.get("warehouse", "")}' AS catalog (
+                        ATTACH '{properties.get("warehouse", "")}' AS catalog (
                             TYPE iceberg,
-                            ENDPOINT '{catalog.properties["uri"]}'
+                            ENDPOINT '{properties["uri"]}'
                         );
                         """)
 
