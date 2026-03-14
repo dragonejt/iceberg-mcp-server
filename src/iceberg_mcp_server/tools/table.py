@@ -17,7 +17,7 @@ from pydantic import Field
 from pyiceberg.catalog import Catalog
 from pyiceberg.table.metadata import TableMetadata
 from pyiceberg.table.snapshots import Snapshot
-from pyiceberg.typedef import EMPTY_DICT, Identifier, Properties
+from pyiceberg.typedef import Identifier, Properties
 
 
 class TableTools:
@@ -186,7 +186,7 @@ class TableTools:
         identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
         contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
         file: Annotated[Path | None, Field(description="Path to table file.")] = None,
-        properties: Annotated[Properties, Field(description="Table properties to set")] = EMPTY_DICT,
+        properties: Annotated[Properties | None, Field(description="Table properties to set")] = None,
     ) -> Annotated[str, Field(description="JSON representation of 5 table rows.")]:
         """Create a new Iceberg table and populate it with contents.
 
@@ -216,7 +216,10 @@ class TableTools:
         else:
             raise ValueError("One of contents or file must be provided!")
 
-        table = self.catalog.create_table(identifier, table_contents.schema, properties=properties)
+        if properties is None:
+            table = self.catalog.create_table(identifier, table_contents.schema)
+        else:
+            table = self.catalog.create_table(identifier, table_contents.schema, properties=properties)
 
         table.overwrite(table_contents)
 
