@@ -132,6 +132,7 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: PLR0912
                             PROVIDER config,
                             KEY_ID '{properties["glue.access-key-id"]}',
                             SECRET '{properties["glue.secret-access-key"]}',
+                            SESSION_TOKEN '{properties.get("glue.session-token", "")}',
                             REGION '{region}'
                         );
                         """)
@@ -154,6 +155,7 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: PLR0912
                             PROVIDER config,
                             KEY_ID '{properties["client.access-key-id"]}',
                             SECRET '{properties["client.secret-access-key"]}',
+                            SESSION_TOKEN '{properties.get("client.session-token", "")}',
                             REGION '{region}'
                         );
                         """)
