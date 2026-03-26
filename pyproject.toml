@@ -16,7 +16,7 @@ dependencies = [
     "polars",
     "pyarrow",
     "pydantic",
-    "pyiceberg[bigquery,duckdb,dynamodb,glue,hive,polars,pyarrow,pyiceberg-core,sql-postgres,sql-sqlite]",
+    "pyiceberg[duckdb,glue,polars,pyarrow,pyiceberg-core]",
     "sentry-sdk",
 ]
 
