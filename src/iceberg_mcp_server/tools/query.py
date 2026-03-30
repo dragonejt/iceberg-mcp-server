@@ -87,7 +87,7 @@ class QueryTools:
             return f"Query result file: {file.resolve()} has file size of {file.stat().st_size} bytes."
 
 
-def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: PLR0912
+def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: C901, PLR0912
     """Create and configure a DuckDB connection with the Iceberg extension.
 
     The function connects to an in-memory DuckDB instance, loads the
@@ -170,12 +170,14 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: PLR0912
         case CatalogType.REST:
             if "oauth2-server-uri" in properties:
                 # REST Catalog using OAuth
+                scope_clause = f", OAUTH2_SCOPE '{properties['scope']}'" if properties.get("scope") is not None else ""
                 con.sql(f"""
                         CREATE OR REPLACE SECRET (
                             TYPE iceberg,
                             CLIENT_ID '{properties["client-id"]}',
                             CLIENT_SECRET '{properties["client-secret"]}',
                             OAUTH2_SERVER_URI '{properties["oauth2-server-uri"]}'
+                            {scope_clause}
                         );
                         """)
                 con.sql(f"""
@@ -200,7 +202,24 @@ def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: PLR0912
                         ENDPOINT_TYPE s3_tables
                         );
                         """)
-
+            elif "credential" in properties and "polaris" in properties.get("uri", "").lower():
+                # Snowflake Polaris Catalog
+                con.sql(f"""
+                        CREATE OR REPLACE SECRET (
+                            TYPE iceberg,
+                            CLIENT_ID '',
+                            CLIENT_SECRET '{properties["credential"]}',
+                            OAUTH2_SERVER_URI '{properties["uri"]}/v1/oauth/tokens',
+                            OAUTH2_GRANT_TYPE 'client_credentials',
+                            OAUTH2_SCOPE '{properties["scope"]}'
+                        );
+                        """)
+                con.sql(f"""
+                        ATTACH '{properties.get("warehouse", "")}' AS catalog (
+                            TYPE iceberg,
+                            ENDPOINT '{properties["uri"]}'
+                        );
+                        """)
             else:
                 # REST Catalog using token
                 con.sql(f"""
