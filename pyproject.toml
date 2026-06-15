@@ -54,3 +54,8 @@ select = [
     "C90", # mccabe
     "FAST" # fastmcp
 ]
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+]

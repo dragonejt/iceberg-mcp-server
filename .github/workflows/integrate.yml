@@ -33,19 +33,10 @@ jobs:
         uv run ruff format --check
         uv run ty check
 
-    - name: Upload Test Coverage to Codecov
-      uses: codecov/codecov-action@v6
-      with:
-        report_type: coverage
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
-
-    - name: Upload Test Results to Codecov
-      uses: codecov/codecov-action@v6
-      with:
-        report_type: test_results
-        fail_ci_if_error: true
-        token: ${{ secrets.CODECOV_TOKEN }}
+    - name: SonarQube Scan
+      uses: SonarSource/sonarqube-scan-action@v8.2.0
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   analyze:
     runs-on: ubuntu-latest
