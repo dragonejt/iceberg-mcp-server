@@ -1,9 +1,9 @@
 # iceberg-mcp-server
 <!-- mcp-name: io.github.dragonejt/iceberg-mcp-server -->
 ![downloads](https://img.shields.io/pypi/dm/iceberg-mcp-server)
+[![codacy](https://app.codacy.com/project/badge/Grade/4a91223ce200420492647b2920147ff6)](https://app.codacy.com/gh/dragonejt/iceberg-mcp-server/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 ![integration](https://github.com/dragonejt/iceberg-mcp-server/actions/workflows/integrate.yml/badge.svg)
 ![delivery](https://github.com/dragonejt/iceberg-mcp-server/actions/workflows/deliver.yml/badge.svg)
-![codecov](https://codecov.io/gh/dragonejt/iceberg-mcp-server/graph/badge.svg?token=7MEF3IHI00)
 
 iceberg-mcp-server is an MCP Server for Apache Iceberg, enabling users to read, query, and manipulate data within Iceberg catalogs. It supports reading and data manipulation using catalog types supported by PyIceberg, and supports SQL queries using catalog types compatible with DuckDB.
 

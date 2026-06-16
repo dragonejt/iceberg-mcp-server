@@ -25,7 +25,7 @@ jobs:
         version: latest
 
     - name: Run Tests
-      run: uv run pytest --junitxml=junit.xml --cov . --cov-report xml:coverage.xml
+      run: uv run pytest --cov src --cov-report xml:coverage.xml
 
     - name: Lint Project and Formatting
       run: |
@@ -33,10 +33,11 @@ jobs:
         uv run ruff format --check
         uv run ty check
 
-    - name: SonarQube Scan
-      uses: SonarSource/sonarqube-scan-action@v8.2.0
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    - name: Upload Coverage to Codacy
+      uses: codacy/codacy-coverage-reporter-action@v1.3.0
+      with:
+        project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+        coverage-reports: coverage.xml
 
   analyze:
     runs-on: ubuntu-latest
