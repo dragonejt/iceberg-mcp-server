@@ -2,13 +2,30 @@ from os import getenv
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
+from opentelemetry import trace
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
 from pyiceberg.catalog import load_catalog
 from sentry_sdk import init as sentry_init
-from sentry_sdk.integrations.mcp import MCPIntegration
+from sentry_sdk.integrations.opentelemetry import SentrySpanProcessor
 
 from iceberg_mcp_server.tools.namespace import NamespaceTools
 from iceberg_mcp_server.tools.query import QueryTools, load_duckdb
 from iceberg_mcp_server.tools.table import TableTools
+
+if getenv("SENTRY_DSN") is not None:
+    provider = TracerProvider()
+    provider.add_span_processor(SentrySpanProcessor())
+    trace.set_tracer_provider(provider)
+    RequestsInstrumentor().instrument()
+    sentry_init(
+        dsn=getenv("SENTRY_DSN"),
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        enable_logs=True,
+        send_default_pii=True,
+        instrumenter="otel",
+    )
 
 catalog = load_catalog(getenv("ICEBERG_CATALOG"))
 duckdb = load_duckdb(catalog)
@@ -35,17 +52,6 @@ mcp.tool(table.delete_table, annotations=ToolAnnotations(destructiveHint=True))
 if duckdb is not None:
     query = QueryTools(duckdb)
     mcp.tool(query.sql_query, annotations=ToolAnnotations(destructiveHint=True))
-
-if getenv("SENTRY_DSN") is not None:
-    sentry_init(
-        dsn=getenv("SENTRY_DSN"),
-        enable_tracing=True,
-        traces_sample_rate=1.0,
-        profiles_sample_rate=1.0,
-        enable_logs=True,
-        send_default_pii=True,
-        integrations=[MCPIntegration()],
-    )
 
 
 if __name__ == "__main__":
