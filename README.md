@@ -1,6 +1,6 @@
 # iceberg-mcp-server
 <!-- mcp-name: io.github.dragonejt/iceberg-mcp-server -->
-![downloads](https://img.shields.io/pypi/dm/iceberg-mcp-server)
+[![downloads](https://static.pepy.tech/personalized-badge/iceberg-mcp-server?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads%2Fmonth)](https://pepy.tech/projects/iceberg-mcp-server)
 [![codacy](https://app.codacy.com/project/badge/Grade/4a91223ce200420492647b2920147ff6)](https://app.codacy.com/gh/dragonejt/iceberg-mcp-server/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![coverage](https://app.codacy.com/project/badge/Coverage/4a91223ce200420492647b2920147ff6)](https://app.codacy.com/gh/dragonejt/iceberg-mcp-server/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_coverage)
 ![integration](https://github.com/dragonejt/iceberg-mcp-server/actions/workflows/integrate.yml/badge.svg)
