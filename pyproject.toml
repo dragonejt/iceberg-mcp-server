@@ -12,12 +12,13 @@ dependencies = [
     "duckdb",
     "fastexcel",
     "fastmcp[tasks]",
+    "opentelemetry-instrumentation-botocore",
     "opentelemetry-instrumentation-requests",
     "polars",
     "pyarrow",
     "pydantic",
     "pyiceberg[duckdb,glue,polars,pyarrow,pyiceberg-core,s3fs]",
-    "sentry-sdk[opentelemetry]",
+    "sentry-sdk[opentelemetry-otlp]",
 ]
 
 [project.urls]
