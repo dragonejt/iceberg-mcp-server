@@ -4,9 +4,6 @@ version = "0.2.1"
 description = "MCP Server for Apache Iceberg"
 readme = "README.md"
 license = "Apache-2.0"
-classifiers = [
-    "Programming Language :: Python :: 3",
-]
 requires-python = ">=3.12"
 dependencies = [
     "duckdb",
@@ -25,7 +22,7 @@ dependencies = [
 homepage = "https://pypi.org/project/iceberg-mcp-server/"
 source = "https://github.com/dragonejt/iceberg-mcp-server.git"
 issues = "https://github.com/dragonejt/iceberg-mcp-server/issues"
-documentation = "https://github.com/dragonejt/iceberg-mcp-server/wiki"
+documentation = "https://github.com/dragonejt/iceberg-mcp-server/blob/main/README.md"
 
 [dependency-groups]
 dev = [

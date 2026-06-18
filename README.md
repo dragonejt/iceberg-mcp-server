@@ -14,11 +14,16 @@ With [uv](https://docs.astral.sh/uv/), installation is easy, the only command yo
 ```bash
 uvx iceberg-mcp-server
 ```
-This will automatically install and run the latest version of iceberg-mcp-server published to PyPI. Alternative Python package runners like `pipx` are also supported. Once installed, iceberg-mcp-server can be used with any agent that supports STDIO-based MCP servers. For example, with OpenAI's Codex CLI `~/.codex/config.toml`:
-```toml
-[mcp_servers.iceberg]
-command = "uvx"
-args = ["iceberg-mcp-server"]
+This will automatically install and run the latest version of iceberg-mcp-server published to PyPI. Alternative Python package runners like `pipx` are also supported. Once installed, iceberg-mcp-server can be used with any agent that supports STDIO-based MCP servers. For example, with Github Copilot `mcp.json`:
+```json
+"servers": {
+  "iceberg-mcp-server": {
+    "command": "uvx",
+    "args": [
+      "iceberg-mcp-server"
+    ],
+  }
+}
 ```
 
 ### Configuration
