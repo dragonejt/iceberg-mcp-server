@@ -52,7 +52,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_glue_glue_profile(
         self,
-        mock_connect,
+        mock_connect: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -77,7 +77,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_glue_catalog_client_profile(
         self,
-        mock_connect,
+        mock_connect: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -103,8 +103,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_glue_catalog_client_credentials(
         self,
-        mock_connect,
-        mock_infer,
+        mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -131,7 +131,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_glue_credentials(
         self,
-        mock_connect,
+        mock_connect: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -158,8 +158,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_glue_explicit_credentials(
         self,
-        mock_connect,
-        mock_infer,
+        mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -187,8 +187,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_rest_catalog_oauth2(
         self,
-        mock_connect,
-        mock_infer,
+        mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -214,8 +214,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_rest_catalog_token(
         self,
-        mock_connect,
-        mock_infer,
+        mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -234,8 +234,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_unsupported_catalog_type(
         self,
-        mock_connect,
-        mock_infer,
+        mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"

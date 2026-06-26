@@ -5,13 +5,15 @@ to list tables, read table metadata, and page table contents into Python
 dictionaries.
 """
 
+from collections.abc import Mapping
+from os import fspath
 from pathlib import Path
 from typing import Annotated, Literal
 
 import polars as pl
-from pyarrow import Table
 from pyarrow.csv import CSVWriter
 from pyarrow.ipc import RecordBatchFileWriter
+from pyarrow.lib import Table
 from pyarrow.parquet import ParquetWriter
 from pydantic import Field
 from pyiceberg.catalog import Catalog
@@ -61,7 +63,7 @@ class TableTools:
         if describe is False:
             return tables
 
-        def format_table_with_comment(table_id: Identifier):
+        def format_table_with_comment(table_id: Identifier) -> Identifier:
             """Format a table identifier with its comment if available.
 
             Args:
@@ -114,15 +116,13 @@ class TableTools:
             List of snapshot objects.
         """
         table = self.catalog.load_table(identifier)
-        snapshots = table.inspect.snapshots()
 
         if snapshot_id is not None:
-            snapshots = [s for s in snapshots if s.snapshot_id == snapshot_id]
+            snapshot = table.metadata.snapshot_by_id(snapshot_id)
+            return [snapshot] if snapshot is not None else []
 
-        if limit is not None:
-            snapshots = snapshots[:limit]
-
-        return snapshots
+        snapshots = table.metadata.snapshots
+        return snapshots if limit is None else snapshots[:limit]
 
     async def read_table_contents(
         self,
@@ -174,7 +174,7 @@ class TableTools:
             case ".parquet" | ".pqt":
                 writer = ParquetWriter(file, batch_reader.schema)
             case ".feather" | ".ftr":
-                writer = RecordBatchFileWriter(file, batch_reader.schema)
+                writer = RecordBatchFileWriter(fspath(file), batch_reader.schema)
             case _:
                 raise ValueError(f"Unsupported file extension: {file.suffix}")
 
@@ -184,7 +184,10 @@ class TableTools:
     async def create_table(
         self,
         identifier: Annotated[str | Identifier, Field(description="The identifier of the table.")],
-        contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
+        contents: Annotated[
+            Mapping[str, list] | None,
+            Field(description="Columnar dictionary of table contents."),
+        ] = None,
         file: Annotated[Path | None, Field(description="Path to table file.")] = None,
         properties: Annotated[Properties | None, Field(description="Table properties to set")] = None,
     ) -> Annotated[str, Field(description="JSON representation of 5 table rows.")]:
@@ -252,7 +255,10 @@ class TableTools:
         mode: Annotated[
             Literal["append", "overwrite"], Field(description="Append the contents or overwrite the table.")
         ],
-        contents: Annotated[dict[str, list] | None, Field(description="Columnar dictionary of table contents.")] = None,
+        contents: Annotated[
+            Mapping[str, list] | None,
+            Field(description="Columnar dictionary of table contents."),
+        ] = None,
         file: Annotated[Path | None, Field(description="Path to table file.")] = None,
     ) -> Annotated[str, Field(description="JSON representation of 5 table rows.")]:
         """Write data to an existing Iceberg table.

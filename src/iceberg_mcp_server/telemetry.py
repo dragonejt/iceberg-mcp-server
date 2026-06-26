@@ -10,7 +10,7 @@ from sentry_sdk import init as sentry_init
 from sentry_sdk.integrations.otlp import OTLPIntegration
 
 
-def setup_telemetry():
+def setup_telemetry() -> None:
     provider = TracerProvider()
     set_tracer_provider(provider)
 

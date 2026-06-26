@@ -4,6 +4,7 @@ This module provides a small helper class to execute SQL queries and return
 results as a list of dictionaries.
 """
 
+from os import fspath
 from pathlib import Path
 from typing import Annotated
 
@@ -77,7 +78,7 @@ class QueryTools:
                 case ".parquet" | ".pqt":
                     writer = ParquetWriter(file, batch_reader.schema)
                 case ".feather" | ".ftr":
-                    writer = RecordBatchFileWriter(file, batch_reader.schema)
+                    writer = RecordBatchFileWriter(fspath(file), batch_reader.schema)
                 case _:
                     raise ValueError(f"Unsupported file extension: {file.suffix}")
 

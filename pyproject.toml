@@ -26,6 +26,7 @@ documentation = "https://github.com/dragonejt/iceberg-mcp-server/blob/main/READM
 
 [dependency-groups]
 dev = [
+    "pyarrow-stubs",
     "pytest",
     "pytest-cov",
     "ruff",
@@ -51,7 +52,9 @@ select = [
     "PL",  # pylint
     "I",   # isort
     "C90", # mccabe
-    "FAST" # fastmcp
+    "ANN", # flake8-annotations
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
 ]
 
 [tool.coverage.run]
