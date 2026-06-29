@@ -6,7 +6,7 @@ from unittest.mock import Mock
 from polars import DataFrame
 from pyiceberg.catalog import Catalog
 from pyiceberg.table import Table
-from pyiceberg.table.metadata import TableMetadata
+from pyiceberg.table.metadata import TableMetadataCommonFields
 from pyiceberg.table.snapshots import Snapshot
 
 from iceberg_mcp_server.tools.table import TableTools
@@ -19,7 +19,7 @@ class TestTable(IsolatedAsyncioTestCase):
         self.mock_table = Mock(spec=Table)
         self.mock_catalog.load_table.return_value = self.mock_table
 
-        self.mock_metadata = Mock(spec=TableMetadata)
+        self.mock_metadata = Mock(spec=TableMetadataCommonFields)
         self.mock_table.metadata = self.mock_metadata
 
         self.mock_snapshot1 = Mock(spec=Snapshot)
@@ -30,7 +30,8 @@ class TestTable(IsolatedAsyncioTestCase):
         self.mock_snapshot2.parent_snapshot_id = 1
 
         self.mock_table.current_snapshot.return_value = self.mock_snapshot2
-        self.mock_table.inspect.snapshots.return_value = [self.mock_snapshot1, self.mock_snapshot2]
+        self.mock_metadata.snapshot_by_id.return_value = self.mock_snapshot1
+        self.mock_metadata.snapshots = [self.mock_snapshot1, self.mock_snapshot2]
 
         self.df = DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
         self.mock_table.scan.return_value.to_polars.return_value = self.df
