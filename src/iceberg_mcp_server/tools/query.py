@@ -5,7 +5,6 @@ results as a list of dictionaries.
 """
 
 import logging
-from json import dumps
 from os import fspath
 from pathlib import Path
 from typing import Annotated
@@ -85,7 +84,7 @@ class QueryTools:
             list(map(writer.write_batch, batch_reader))
             writer.close()
 
-            return dumps({"file_path": file.resolve(), "file_size": file.stat().st_size})
+            return f"Query result file: {file.resolve()} has file size of {file.stat().st_size} bytes."
 
 
 def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBPyConnection | None:  # noqa: C901, PLR0912

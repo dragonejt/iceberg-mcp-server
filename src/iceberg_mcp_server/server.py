@@ -14,7 +14,7 @@ setup_telemetry()
 catalog = load_catalog(getenv("ICEBERG_CATALOG"))
 catalog_type = (
     CatalogType(catalog.properties.get("type"))
-    if catalog.properties.get("type")
+    if catalog.properties.get("type") is not None
     else infer_catalog_type(catalog.name, catalog.properties) or CatalogType.REST
 )
 logging.info(f"Loaded Iceberg Catalog with type: {catalog_type.value}")
