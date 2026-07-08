@@ -1,3 +1,4 @@
+from logging import INFO, NullHandler, getLogger
 from os import getenv
 
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
@@ -14,12 +15,15 @@ def setup_telemetry() -> None:
     provider = TracerProvider()
     set_tracer_provider(provider)
 
+    log = getLogger()
+    log.setLevel(INFO)
+    log.handlers = [NullHandler()]
+
     if getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None or getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") is not None:
         provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
     elif getenv("SENTRY_DSN") is not None:
         sentry_init(
             dsn=getenv("SENTRY_DSN"),
-            traces_sample_rate=1.0,
             profiles_sample_rate=1.0,
             enable_logs=True,
             send_default_pii=True,
