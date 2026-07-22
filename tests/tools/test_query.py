@@ -1,5 +1,5 @@
+import tempfile
 from pathlib import Path
-from tempfile import TemporaryDirectory
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock, patch
 
@@ -22,7 +22,7 @@ class TestQuerySQL(IsolatedAsyncioTestCase):
         self.mock_duckdb.sql.return_value.execute.return_value = mock_result
 
     async def test_sql_query_with_csv_file(self) -> None:
-        with TemporaryDirectory() as parent_dir:
+        with tempfile.TemporaryDirectory() as parent_dir:
             file_path = Path(parent_dir) / "test.csv"
 
             await self.tools.sql_query("SELECT * FROM CATALOG", file_path)
@@ -66,7 +66,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
 
-        result = load_duckdb(CatalogType(mock_catalog.properties["type"]), mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         mock_conn.install_extension.assert_any_call("iceberg")
         mock_conn.install_extension.assert_any_call("aws")
@@ -91,7 +91,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
 
-        result = load_duckdb(CatalogType(mock_catalog.properties["type"]), mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         mock_conn.install_extension.assert_any_call("iceberg")
         mock_conn.install_extension.assert_any_call("aws")
@@ -99,10 +99,12 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn.load_extension.assert_any_call("aws")
         self.assertEqual(result, mock_conn)
 
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_glue_catalog_client_credentials(
         self,
         mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -116,8 +118,9 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
+        mock_infer.return_value = CatalogType.GLUE
 
-        result = load_duckdb(CatalogType.GLUE, mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         mock_conn.install_extension.assert_any_call("iceberg")
         mock_conn.install_extension.assert_any_call("aws")
@@ -143,7 +146,7 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
 
-        result = load_duckdb(CatalogType(mock_catalog.properties["type"]), mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         mock_conn.install_extension.assert_any_call("iceberg")
         mock_conn.install_extension.assert_any_call("aws")
@@ -151,10 +154,12 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn.load_extension.assert_any_call("aws")
         self.assertEqual(result, mock_conn)
 
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_glue_explicit_credentials(
         self,
         mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -168,8 +173,9 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
+        mock_infer.return_value = CatalogType.GLUE
 
-        result = load_duckdb(CatalogType.GLUE, mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         mock_conn.install_extension.assert_any_call("iceberg")
         mock_conn.install_extension.assert_any_call("aws")
@@ -177,10 +183,12 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
         mock_conn.load_extension.assert_any_call("aws")
         self.assertEqual(result, mock_conn)
 
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_rest_catalog_oauth2(
         self,
         mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -194,17 +202,20 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
+        mock_infer.return_value = CatalogType.REST
 
-        result = load_duckdb(CatalogType.REST, mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         mock_conn.install_extension.assert_any_call("iceberg")
         mock_conn.load_extension.assert_called_with("iceberg")
         self.assertEqual(result, mock_conn)
 
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_rest_catalog_token(
         self,
         mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -212,16 +223,19 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
+        mock_infer.return_value = CatalogType.REST
 
-        result = load_duckdb(CatalogType.REST, mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         mock_conn.install_extension.assert_called_with("iceberg")
         self.assertEqual(result, mock_conn)
 
+    @patch("iceberg_mcp_server.tools.query.infer_catalog_type")
     @patch("iceberg_mcp_server.tools.query.ddb_connect")
     def test_load_duckdb_with_unsupported_catalog_type(
         self,
         mock_connect: Mock,
+        mock_infer: Mock,
     ) -> None:
         mock_catalog = Mock(spec=Catalog)
         mock_catalog.name = "test_catalog"
@@ -229,7 +243,8 @@ class TestQueryLoadDuckDB(IsolatedAsyncioTestCase):
 
         mock_conn = Mock(spec=DuckDBPyConnection)
         mock_connect.return_value = mock_conn
+        mock_infer.return_value = CatalogType.BIGQUERY
 
-        result = load_duckdb(CatalogType.BIGQUERY, mock_catalog.properties)
+        result = load_duckdb(mock_catalog)
 
         self.assertIsNone(result)

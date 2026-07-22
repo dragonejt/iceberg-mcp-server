@@ -1,9 +1,8 @@
-import logging
 from os import getenv
 
 from fastmcp import FastMCP
 from mcp.types import ToolAnnotations
-from pyiceberg.catalog import CatalogType, infer_catalog_type, load_catalog
+from pyiceberg.catalog import load_catalog
 
 from iceberg_mcp_server.telemetry import setup_telemetry
 from iceberg_mcp_server.tools.namespace import NamespaceTools
@@ -12,13 +11,7 @@ from iceberg_mcp_server.tools.table import TableTools
 
 setup_telemetry()
 catalog = load_catalog(getenv("ICEBERG_CATALOG"))
-catalog_type = (
-    CatalogType(catalog.properties.get("type"))
-    if catalog.properties.get("type") is not None
-    else infer_catalog_type(catalog.name, catalog.properties) or CatalogType.REST
-)
-logging.info(f"Loaded Iceberg Catalog with type: {catalog_type.value}")
-duckdb = load_duckdb(catalog_type, catalog.properties)
+duckdb = load_duckdb(catalog)
 mcp = FastMCP(
     name="Iceberg MCP Server",
 )

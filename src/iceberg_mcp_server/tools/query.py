@@ -4,7 +4,6 @@ This module provides a small helper class to execute SQL queries and return
 results as a list of dictionaries.
 """
 
-import logging
 from os import fspath
 from pathlib import Path
 from typing import Annotated
@@ -15,8 +14,7 @@ from pyarrow.csv import CSVWriter
 from pyarrow.ipc import RecordBatchFileWriter
 from pyarrow.parquet import ParquetWriter
 from pydantic import Field
-from pyiceberg.catalog import CatalogType
-from pyiceberg.typedef import RecursiveDict
+from pyiceberg.catalog import Catalog, CatalogType, infer_catalog_type
 
 
 class QueryTools:
@@ -87,7 +85,7 @@ class QueryTools:
             return f"Query result file: {file.resolve()} has file size of {file.stat().st_size} bytes."
 
 
-def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBPyConnection | None:  # noqa: C901, PLR0912
+def load_duckdb(catalog: Catalog) -> DuckDBPyConnection | None:  # noqa: C901, PLR0912
     """Create and configure a DuckDB connection with the Iceberg extension.
 
     The function connects to an in-memory DuckDB instance, loads the
@@ -100,6 +98,12 @@ def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBP
     con = ddb_connect()
     con.install_extension("iceberg")
     con.load_extension("iceberg")
+
+    properties = catalog.properties
+    if type_str := properties.get("type"):
+        catalog_type = CatalogType(type_str)
+    else:
+        catalog_type = infer_catalog_type(catalog.name, properties)
 
     match catalog_type:
         case CatalogType.GLUE:
@@ -160,10 +164,6 @@ def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBP
                     ENDPOINT_TYPE 'glue'
                     );
                     """)
-            logging.info(
-                f"Loaded DuckDB connection with Glue Iceberg Catalog in AWS Account: {properties['glue.id']}",
-                extra={"catalog_type": CatalogType.GLUE.value, "warehouse": properties["glue.id"]},
-            )
         case CatalogType.REST:
             if "oauth2-server-uri" in properties:
                 # REST Catalog using OAuth
@@ -183,10 +183,6 @@ def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBP
                             ENDPOINT '{properties["uri"]}'
                         );
                         """)
-                logging.info(
-                    f"Loaded DuckDB connection with Iceberg OAuthREST Catalog with warehouse: {properties.get('warehouse')}",
-                    extra={"catalog_type": CatalogType.REST.value, "warehouse": properties.get("warehouse", "")},
-                )
 
             elif "s3tablescatalog" in properties.get("warehouse", ""):
                 # S3 Tables Catalog
@@ -204,10 +200,6 @@ def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBP
                         ENDPOINT_TYPE s3_tables
                         );
                         """)
-                logging.info(
-                    f"Loaded DuckDB connection with S3 Tables Catalog with warehouse: {properties.get('warehouse', '')}",
-                    extra={"catalog_type": "s3_tables", "warehouse": properties["warehouse"]},
-                )
             elif "credential" in properties and "polaris" in properties.get("uri", "").lower():
                 # Snowflake Polaris Catalog
                 con.sql(f"""
@@ -226,10 +218,6 @@ def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBP
                             ENDPOINT '{properties["uri"]}'
                         );
                         """)
-                logging.info(
-                    f"Loaded DuckDB connection with Snowflake / Polaris Catalog with warehouse: {properties.get('warehouse')}",
-                    extra={"catalog_type": "polaris", "warehouse": properties.get("warehouse", "")},
-                )
             else:
                 # REST Catalog using token
                 con.sql(f"""
@@ -244,16 +232,8 @@ def load_duckdb(catalog_type: CatalogType, properties: RecursiveDict) -> DuckDBP
                             ENDPOINT '{properties["uri"]}'
                         );
                         """)
-                logging.info(
-                    f"Loaded DuckDB connection with Iceberg REST Catalog with warehouse: {properties.get('warehouse')}",
-                    extra={"catalog_type": CatalogType.REST.value, "warehouse": properties.get("warehouse", "")},
-                )
 
         case _:
-            logging.info(
-                f"Catalog type: {catalog_type} not supported for DuckDB connection",
-                extra={"catalog_type": catalog_type},
-            )
             return None
     con.sql("USE catalog.default;")
 
