@@ -34,7 +34,7 @@ dev = [
 ]
 
 [project.scripts]
-iceberg-mcp-server = "iceberg_mcp_server.server:mcp.run"
+iceberg-mcp-server = "iceberg_mcp_server.server:main"
 
 [build-system]
 requires = ["uv_build"]
