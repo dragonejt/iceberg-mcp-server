@@ -1,3 +1,4 @@
+from importlib.metadata import version
 from os import environ, getenv
 
 from fastmcp import FastMCP
@@ -22,6 +23,7 @@ def main() -> None:
     setup_telemetry()
     mcp = FastMCP(
         name="Iceberg MCP Server",
+        version=version("iceberg-mcp-server"),
     )
     mcp.add_extension(TasksExtension())
     catalog = load_catalog(getenv("ICEBERG_CATALOG"))
