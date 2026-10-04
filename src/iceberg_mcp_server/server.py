@@ -1,4 +1,4 @@
-from os import getenv
+from os import environ, getenv
 
 from fastmcp import FastMCP
 from fastmcp_tasks import TasksExtension
@@ -20,12 +20,11 @@ from iceberg_mcp_server.tools.table import TableTools
 
 def main() -> None:
     setup_telemetry()
-    catalog = load_catalog(getenv("ICEBERG_CATALOG"))
-    duckdb = load_duckdb(catalog)
     mcp = FastMCP(
         name="Iceberg MCP Server",
     )
     mcp.add_extension(TasksExtension())
+    catalog = load_catalog(getenv("ICEBERG_CATALOG"))
 
     namespace = NamespaceTools(catalog)
     mcp.tool(namespace.list_namespaces, annotations=ToolAnnotations(read_only_hint=True))
@@ -43,6 +42,7 @@ def main() -> None:
     mcp.tool(table.write_table)
     mcp.tool(table.delete_table, annotations=ToolAnnotations(destructive_hint=True))
 
+    duckdb = load_duckdb(catalog)
     if duckdb is not None:
         query = QueryTools(duckdb)
         mcp.tool(query.sql_query, annotations=ToolAnnotations(destructive_hint=True))
@@ -54,9 +54,9 @@ def setup_telemetry() -> None:
     provider = TracerProvider()
     set_tracer_provider(provider)
 
-    if getenv("OTEL_EXPORTER_OTLP_ENDPOINT") is not None or getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT") is not None:
+    if "OTEL_EXPORTER_OTLP_ENDPOINT" in environ or "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT" in environ:
         provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
-    elif getenv("SENTRY_DSN") is not None:
+    elif "SENTRY_DSN" in environ:
         sentry_init(
             dsn=getenv("SENTRY_DSN"),
             profiles_sample_rate=1.0,
