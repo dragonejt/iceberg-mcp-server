@@ -18,12 +18,6 @@ dependencies = [
     "sentry-sdk[opentelemetry-otlp]",
 ]
 
-[project.urls]
-homepage = "https://pypi.org/project/iceberg-mcp-server/"
-source = "https://github.com/dragonejt/iceberg-mcp-server.git"
-issues = "https://github.com/dragonejt/iceberg-mcp-server/issues"
-documentation = "https://github.com/dragonejt/iceberg-mcp-server/blob/main/README.md"
-
 [dependency-groups]
 dev = [
     "pyarrow-stubs",
@@ -32,6 +26,12 @@ dev = [
     "ruff",
     "ty",
 ]
+
+[project.urls]
+homepage = "https://pypi.org/project/iceberg-mcp-server/"
+source = "https://github.com/dragonejt/iceberg-mcp-server.git"
+issues = "https://github.com/dragonejt/iceberg-mcp-server/issues"
+documentation = "https://github.com/dragonejt/iceberg-mcp-server/blob/main/README.md"
 
 [project.scripts]
 iceberg-mcp-server = "iceberg_mcp_server.server:main"
@@ -56,7 +56,6 @@ select = [
     "B",   # flake8-bugbear
     "UP",  # pyupgrade
 ]
-ignore = ["E501"] # line-too-long
 
 [tool.coverage.run]
 omit = [
