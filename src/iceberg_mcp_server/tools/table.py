@@ -315,7 +315,7 @@ class TableTools:
 
         return await self.list_tables(namespace)
 
-    def _read_table_from_file(self, file: Annotated[Path, Field(description="Path of table file.")]) -> Table:
+    def _read_table_from_file(self, file: Path) -> Table:
         """Read table contents from a file.
 
         Args:
