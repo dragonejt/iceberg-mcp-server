@@ -19,7 +19,7 @@ class TestQuerySQL(IsolatedAsyncioTestCase):
         mock_result = Mock(spec=DuckDBPyRelation)
         mock_result.pl.return_value = self.df
         mock_result.arrow.return_value = self.df.to_arrow().to_reader()
-        self.mock_duckdb.sql.return_value.execute.return_value = mock_result
+        self.mock_duckdb.sql.return_value = mock_result
 
     async def test_sql_query_with_csv_file(self) -> None:
         with tempfile.TemporaryDirectory() as parent_dir:
