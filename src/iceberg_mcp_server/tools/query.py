@@ -61,7 +61,7 @@ class QueryTools:
             FileNotFoundError: If the parent directory of the specified file does not exist.
             ValueError: If the file extension is unsupported.
         """
-        result = self.duckdb.sql(query).execute()
+        result = self.duckdb.sql(query)
 
         if file is None:
             return result.pl().write_json()
