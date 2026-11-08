@@ -41,6 +41,7 @@ jobs:
           args: >
             -Dsonar.organization=dragonejt
             -Dsonar.projectKey=dragonejt_iceberg-mcp-server
+            -Dsonar.python.coverage.reportPaths=coverage.xml
 
   analyze:
     runs-on: ubuntu-latest
