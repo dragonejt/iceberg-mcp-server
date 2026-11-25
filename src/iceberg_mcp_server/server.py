@@ -61,9 +61,7 @@ def setup_telemetry() -> None:
     elif "SENTRY_DSN" in environ:
         sentry_init(
             dsn=getenv("SENTRY_DSN"),
-            profiles_sample_rate=1.0,
-            enable_logs=True,
-            send_default_pii=True,
+            sample_rate=1.0,
             integrations=[OTLPIntegration()],
         )
 
